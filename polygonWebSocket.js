@@ -234,17 +234,17 @@ class PolygonWebSocketClient {
     const tradeValue = price * size;
     
     // Determine sentiment based on darkpool trade price vs current market price
-    // Trade above current price = bullish (buyer paid premium = aggressive/strong demand)
-    // Trade below current price = bearish (seller accepted discount = weak hands/desperation)
+    // Trade below current price = bullish (buyers willing to pay market price)
+    // Trade above current price = bearish (sellers getting premium)
     let bullishAmount = 0;
     let bearishAmount = 0;
     
-    if (price > currentPrice) {
+    if (price < currentPrice) {
       bullishAmount = tradeValue;
-      console.log(`[${ticker}] 🟢 BULLISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (above $${currentPrice})`);
-    } else if (price < currentPrice) {
+      console.log(`[${ticker}] 🟢 BULLISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (below $${currentPrice})`);
+    } else if (price > currentPrice) {
       bearishAmount = tradeValue;
-      console.log(`[${ticker}] 🔴 BEARISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (below $${currentPrice})`);
+      console.log(`[${ticker}] 🔴 BEARISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (above $${currentPrice})`);
     }
     
     // Update database
