@@ -39,8 +39,9 @@ body {
 }
 
 .container {
-  max-width: 1600px;
+  max-width: 100%;
   margin: 0 auto;
+  padding: 0 20px;
 }
 
 header {
@@ -147,7 +148,7 @@ body.dark-mode .toggle-icon {
 
 .tables-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(700px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
   gap: 30px;
   margin-bottom: 40px;
 }
@@ -174,7 +175,8 @@ body.dark-mode .toggle-icon {
 .sentiment-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  table-layout: auto;
 }
 
 .sentiment-table thead {
@@ -227,9 +229,9 @@ body.dark-mode .toggle-icon {
 .amount-cell {
   text-align: right;
   font-family: 'Monaco', 'Courier New', monospace;
-  font-size: 0.9rem;
-  min-width: 180px;
+  font-size: 0.85rem;
   white-space: nowrap;
+  padding-right: 12px;
 }
 
 .bullish-text {
