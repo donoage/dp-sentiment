@@ -207,17 +207,6 @@ class PolygonWebSocketClient {
     const exchange = msg.x;
     const trfId = msg.trfi; // TRF ID field (trfi per WebSocket API docs)
     
-    // DEBUG: Log first few trades to see what data we're getting
-    if (Math.random() < 0.01) { // Log ~1% of trades to avoid spam
-      console.log(`[DEBUG] Trade sample for ${ticker}:`, {
-        exchange: exchange,
-        trfi: trfId,
-        price: price,
-        size: size,
-        conditions: msg.c
-      });
-    }
-    
     // Dark pool trades are identified by:
     // 1. exchange ID of 4 (exchange: 4)
     // 2. presence of a trfi field (Trade Reporting Facility ID)
