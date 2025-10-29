@@ -313,12 +313,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     initDarkMode();
     
     await fetchHoldings(); // Fetch holdings first
-    await fetchSentiments(); // Initial fetch via HTTP
     
-    // Try to connect via WebSocket for real-time updates
+    // Connect via WebSocket for real-time updates
+    // WebSocket will send initial data on connection
     connectWebSocket();
     
-    // Fallback: Poll every 20 seconds if WebSocket fails
+    // Fallback: Only poll if WebSocket fails to connect
     setInterval(() => {
       if (useFallback || !ws || ws.readyState !== WebSocket.OPEN) {
         fetchSentiments();
