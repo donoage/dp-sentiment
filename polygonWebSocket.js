@@ -155,13 +155,6 @@ class PolygonWebSocketClient {
         return;
       }
 
-      // Track message counts for monitoring
-      let amCount = 0;
-      let tradeCount = 0;
-      let darkpoolCount = 0;
-      let exchange4Count = 0;
-      let trfIdCount = 0;
-
       messages.forEach(msg => {
         if (msg.ev === 'status' && msg.status === 'auth_success') {
           console.log('✅ Authentication successful');
@@ -169,22 +162,11 @@ class PolygonWebSocketClient {
         } else if (msg.ev === 'status' && msg.status === 'success') {
           console.log(`✅ ${msg.message}`);
         } else if (msg.ev === 'AM') {
-          amCount++;
           this.handleMinuteAggregate(msg);
         } else if (msg.ev === 'T') {
-          tradeCount++;
-          // Track exchange 4 and trfi separately for debugging
-          if (msg.x === 4) exchange4Count++;
-          if (msg.trfi !== undefined) trfIdCount++;
-          const isDarkpool = this.handleTrade(msg);
-          if (isDarkpool) darkpoolCount++;
+          this.handleTrade(msg);
         }
       });
-
-      // Log batch statistics (only if there were messages)
-      if (amCount > 0 || tradeCount > 0) {
-        console.log(`📊 Batch: ${amCount} minute bars, ${tradeCount} trades (${darkpoolCount} darkpool, ${exchange4Count} exch=4, ${trfIdCount} with trf_id)`);
-      }
     } catch (error) {
       console.error('Error handling message:', error);
     }
