@@ -167,6 +167,65 @@ async function getEODSnapshots(limit = 30) {
   }
 }
 
+// Save holdings cache to database
+async function saveHoldingsCache(spy, qqq) {
+  const client = await pool.connect();
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS holdings_cache (
+        id INTEGER PRIMARY KEY DEFAULT 1,
+        spy_holdings JSONB NOT NULL,
+        qqq_holdings JSONB NOT NULL,
+        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT single_row CHECK (id = 1)
+      )
+    `);
+
+    await client.query(`
+      INSERT INTO holdings_cache (id, spy_holdings, qqq_holdings, last_updated)
+      VALUES (1, $1, $2, CURRENT_TIMESTAMP)
+      ON CONFLICT (id)
+      DO UPDATE SET
+        spy_holdings = $1,
+        qqq_holdings = $2,
+        last_updated = CURRENT_TIMESTAMP
+    `, [JSON.stringify(spy), JSON.stringify(qqq)]);
+
+    console.log('💾 Saved holdings cache to database');
+  } catch (error) {
+    console.error('Error saving holdings cache:', error);
+  } finally {
+    client.release();
+  }
+}
+
+// Load holdings cache from database
+async function loadHoldingsCache() {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(`
+      SELECT spy_holdings, qqq_holdings, last_updated
+      FROM holdings_cache
+      WHERE id = 1
+    `);
+
+    if (result.rows.length > 0) {
+      console.log('📂 Loaded holdings cache from database');
+      return {
+        spy: result.rows[0].spy_holdings,
+        qqq: result.rows[0].qqq_holdings,
+        lastUpdated: result.rows[0].last_updated
+      };
+    }
+  } catch (error) {
+    // Table doesn't exist yet - that's okay
+    console.log('📂 No holdings cache found in database');
+  } finally {
+    client.release();
+  }
+  return null;
+}
+
 module.exports = {
   pool,
   initDatabase,
@@ -174,6 +233,8 @@ module.exports = {
   getAllSentiments,
   resetSentiments,
   saveEODSnapshot,
-  getEODSnapshots
+  getEODSnapshots,
+  saveHoldingsCache,
+  loadHoldingsCache
 };
 

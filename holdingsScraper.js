@@ -1,5 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const { saveHoldingsCache, loadHoldingsCache } = require('./database');
 
 class HoldingsScraper {
   constructor() {
@@ -13,6 +14,35 @@ class HoldingsScraper {
   // Helper delay function
   delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Load cached holdings from database
+  async loadPersistedCache() {
+    try {
+      const cached = await loadHoldingsCache();
+      
+      if (cached && cached.spy && cached.qqq) {
+        this.cache = {
+          spy: { data: cached.spy, lastUpdated: new Date(cached.lastUpdated).getTime() },
+          qqq: { data: cached.qqq, lastUpdated: new Date(cached.lastUpdated).getTime() }
+        };
+        return true;
+      }
+    } catch (error) {
+      console.log('📂 No persisted cache found in database');
+    }
+    return false;
+  }
+
+  // Save holdings cache to database
+  async savePersistedCache() {
+    try {
+      if (this.cache.spy.data && this.cache.qqq.data) {
+        await saveHoldingsCache(this.cache.spy.data, this.cache.qqq.data);
+      }
+    } catch (error) {
+      console.error('⚠️ Failed to save holdings cache:', error);
+    }
   }
 
   // Check if cache is still valid
@@ -99,106 +129,84 @@ class HoldingsScraper {
 
   // Get SPY holdings (with caching)
   async getSPYHoldings() {
+    // Check if we have fresh data (less than 6 hours old)
     if (this.isCacheValid('spy')) {
-      console.log('📦 Using cached SPY holdings');
+      console.log('📦 Using cached SPY holdings (still valid)');
       return this.cache.spy.data;
     }
 
     try {
-      // Add delay to avoid rate limiting
+      // Try to scrape fresh data
+      console.log('🔍 Fetching fresh SPY holdings from StockAnalysis.com...');
       await this.delay(1000);
       const holdings = await this.scrapeStockAnalysis('SPY');
+      
       if (holdings.length >= 15) {
         this.cache.spy = {
           data: holdings.slice(0, 20),
           lastUpdated: Date.now()
         };
+        // Save to database after successful fetch
+        await this.savePersistedCache();
+        console.log('✅ Fetched fresh SPY holdings');
         return this.cache.spy.data;
       } else {
         throw new Error(`Only scraped ${holdings.length} holdings, expected at least 15`);
       }
     } catch (error) {
-      console.error('Failed to scrape SPY, using fallback static data');
-      return this.getFallbackSPY();
+      console.error('❌ Failed to scrape SPY from StockAnalysis.com');
+      
+      // Fallback: Use yesterday's data from database (if available)
+      if (this.cache.spy.data && this.cache.spy.data.length > 0) {
+        console.log('📦 Using yesterday\'s SPY holdings from database');
+        return this.cache.spy.data;
+      }
+      
+      // No cache available - this is a critical error
+      throw new Error('No SPY holdings available - scraping failed and no cache exists');
     }
   }
 
   // Get QQQ holdings (with caching)
   async getQQQHoldings() {
+    // Check if we have fresh data (less than 6 hours old)
     if (this.isCacheValid('qqq')) {
-      console.log('📦 Using cached QQQ holdings');
+      console.log('📦 Using cached QQQ holdings (still valid)');
       return this.cache.qqq.data;
     }
 
     try {
-      // Add delay to avoid rate limiting
+      // Try to scrape fresh data
+      console.log('🔍 Fetching fresh QQQ holdings from StockAnalysis.com...');
       await this.delay(2000);
       const holdings = await this.scrapeStockAnalysis('QQQ');
+      
       if (holdings.length >= 15) {
         this.cache.qqq = {
           data: holdings.slice(0, 20),
           lastUpdated: Date.now()
         };
+        // Save to database after successful fetch
+        await this.savePersistedCache();
+        console.log('✅ Fetched fresh QQQ holdings');
         return this.cache.qqq.data;
       } else {
         throw new Error(`Only scraped ${holdings.length} holdings, expected at least 15`);
       }
     } catch (error) {
-      console.error('Failed to scrape QQQ, using fallback static data');
-      return this.getFallbackQQQ();
+      console.error('❌ Failed to scrape QQQ from StockAnalysis.com');
+      
+      // Fallback: Use yesterday's data from database (if available)
+      if (this.cache.qqq.data && this.cache.qqq.data.length > 0) {
+        console.log('📦 Using yesterday\'s QQQ holdings from database');
+        return this.cache.qqq.data;
+      }
+      
+      // No cache available - this is a critical error
+      throw new Error('No QQQ holdings available - scraping failed and no cache exists');
     }
   }
 
-  // Fallback static data (current config.js data)
-  getFallbackSPY() {
-    return [
-      { ticker: 'NVDA', weight: 7.63 },
-      { ticker: 'MSFT', weight: 6.70 },
-      { ticker: 'AAPL', weight: 6.61 },
-      { ticker: 'AMZN', weight: 3.77 },
-      { ticker: 'META', weight: 2.91 },
-      { ticker: 'AVGO', weight: 2.82 },
-      { ticker: 'GOOGL', weight: 1.95 },
-      { ticker: 'GOOG', weight: 1.89 },
-      { ticker: 'TSLA', weight: 1.49 },
-      { ticker: 'BRK.B', weight: 1.45 },
-      { ticker: 'JPM', weight: 1.36 },
-      { ticker: 'JNJ', weight: 1.21 },
-      { ticker: 'UNH', weight: 1.20 },
-      { ticker: 'XOM', weight: 1.10 },
-      { ticker: 'PG', weight: 1.00 },
-      { ticker: 'V', weight: 0.98 },
-      { ticker: 'MA', weight: 0.92 },
-      { ticker: 'HD', weight: 0.88 },
-      { ticker: 'COST', weight: 0.85 },
-      { ticker: 'NFLX', weight: 0.82 }
-    ];
-  }
-
-  getFallbackQQQ() {
-    return [
-      { ticker: 'AAPL', weight: 12.79 },
-      { ticker: 'MSFT', weight: 10.50 },
-      { ticker: 'AMZN', weight: 6.99 },
-      { ticker: 'NVDA', weight: 5.12 },
-      { ticker: 'META', weight: 4.47 },
-      { ticker: 'GOOGL', weight: 3.92 },
-      { ticker: 'GOOG', weight: 3.85 },
-      { ticker: 'TSLA', weight: 3.12 },
-      { ticker: 'AVGO', weight: 2.15 },
-      { ticker: 'PEP', weight: 2.10 },
-      { ticker: 'COST', weight: 2.00 },
-      { ticker: 'ADBE', weight: 1.90 },
-      { ticker: 'CSCO', weight: 1.80 },
-      { ticker: 'CMCSA', weight: 1.70 },
-      { ticker: 'INTC', weight: 1.60 },
-      { ticker: 'NFLX', weight: 1.55 },
-      { ticker: 'AMD', weight: 1.45 },
-      { ticker: 'QCOM', weight: 1.35 },
-      { ticker: 'TXN', weight: 1.25 },
-      { ticker: 'INTU', weight: 1.20 }
-    ];
-  }
 
   // Get all unique tickers
   getAllTickers(spyHoldings, qqqHoldings) {
@@ -210,6 +218,10 @@ class HoldingsScraper {
   // Refresh holdings (call this daily)
   async refreshHoldings() {
     console.log('🔄 Refreshing ETF holdings...');
+    
+    // Load yesterday's cache ONLY as a fallback (don't use it unless scraping fails)
+    await this.loadPersistedCache();
+    
     try {
       const spy = await this.getSPYHoldings();
       const qqq = await this.getQQQHoldings();

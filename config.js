@@ -21,10 +21,12 @@ class DynamicConfig {
       this.initialized = true;
       console.log(`✅ Holdings initialized: ${spy.length} SPY, ${qqq.length} QQQ`);
     } catch (error) {
-      console.error('⚠️ Failed to fetch live holdings, using fallback data');
-      this.SPY_TOP_20 = this.scraper.getFallbackSPY();
-      this.QQQ_TOP_20 = this.scraper.getFallbackQQQ();
-      this.initialized = true;
+      console.error('❌ CRITICAL: Failed to initialize holdings');
+      console.error('This likely means:');
+      console.error('1. StockAnalysis.com is down');
+      console.error('2. No cached holdings exist in database');
+      console.error('Please check the scraper or manually seed the holdings_cache table');
+      throw error; // Don't start server without holdings
     }
   }
 
