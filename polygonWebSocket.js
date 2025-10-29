@@ -3,8 +3,9 @@ const config = require('./config');
 const { updateSentiment } = require('./database');
 
 class PolygonWebSocketClient {
-  constructor(apiKey) {
+  constructor(apiKey, broadcastServer = null) {
     this.apiKey = apiKey;
+    this.broadcastServer = broadcastServer;
     this.ws = null;
     this.reconnectInterval = 5000;
     this.reconnectAttempts = 0;
@@ -249,6 +250,12 @@ class PolygonWebSocketClient {
     // Update database
     if (bullishAmount > 0 || bearishAmount > 0) {
       updateSentiment(ticker, bullishAmount, bearishAmount);
+      
+      // Broadcast update to connected clients in real-time
+      if (this.broadcastServer) {
+        this.broadcastServer.broadcastSentimentUpdate(ticker, bullishAmount, bearishAmount);
+      }
+      
       return true;
     }
     

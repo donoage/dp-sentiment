@@ -1,17 +1,23 @@
 const express = require('express');
+const http = require('http');
 const path = require('path');
 require('dotenv').config();
 
 const { initDatabase, getAllSentiments, getEODSnapshots } = require('./database');
 const PolygonWebSocketClient = require('./polygonWebSocket');
 const EODScheduler = require('./eodScheduler');
+const BroadcastServer = require('./broadcastServer');
 const config = require('./config');
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 
-// Single WebSocket client instance
+// Single WebSocket client instance (to Polygon)
 let wsClient = null;
+
+// Broadcast server instance (to clients)
+let broadcastServer = null;
 
 // EOD Scheduler instance
 let eodScheduler = null;
@@ -68,18 +74,24 @@ async function startServer() {
     await initDatabase();
     console.log('Database initialized');
 
-    // Start WebSocket client (singleton)
+    // Start broadcast WebSocket server for clients
+    if (!broadcastServer) {
+      broadcastServer = new BroadcastServer(server);
+      console.log('Broadcast WebSocket server started');
+    }
+
+    // Start WebSocket client to Polygon (singleton)
     if (!wsClient) {
       const apiKey = process.env.POLYGON_API_KEY;
       if (!apiKey) {
         throw new Error('POLYGON_API_KEY not found in environment variables');
       }
 
-      wsClient = new PolygonWebSocketClient(apiKey);
+      wsClient = new PolygonWebSocketClient(apiKey, broadcastServer);
       wsClient.connect();
-      console.log('WebSocket client started');
+      console.log('Polygon WebSocket client started');
     } else {
-      console.log('WebSocket client already running');
+      console.log('Polygon WebSocket client already running');
     }
 
     // Start EOD Scheduler
@@ -91,10 +103,11 @@ async function startServer() {
       console.log('EOD Scheduler already running');
     }
 
-    // Start Express server
-    app.listen(PORT, () => {
+    // Start HTTP server
+    server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Dashboard: http://localhost:${PORT}`);
+      console.log(`WebSocket: ws://localhost:${PORT}/ws`);
     });
   } catch (error) {
     console.error('Error starting server:', error);

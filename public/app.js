@@ -3,6 +3,12 @@ let SPY_HOLDINGS = [];
 let QQQ_HOLDINGS = [];
 let ALL_TICKERS = [];
 
+// WebSocket connection
+let ws = null;
+let wsReconnectAttempts = 0;
+let wsReconnectTimeout = null;
+let useFallback = false;
+
 // Fetch holdings configuration
 async function fetchHoldings() {
   try {
@@ -30,7 +36,7 @@ async function fetchHoldings() {
   }
 }
 
-// Fetch and update sentiment data
+// Fetch and update sentiment data (HTTP fallback)
 async function fetchSentiments() {
   try {
     const response = await fetch('/api/sentiments');
@@ -43,6 +49,71 @@ async function fetchSentiments() {
     console.error('Error fetching sentiments:', error);
     // Don't throw - allow retries via interval
   }
+}
+
+// WebSocket connection
+function connectWebSocket() {
+  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+    return; // Already connected or connecting
+  }
+
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}/ws`;
+  
+  console.log('🔌 Connecting to WebSocket:', wsUrl);
+  ws = new WebSocket(wsUrl);
+
+  ws.onopen = () => {
+    console.log('✅ WebSocket connected');
+    wsReconnectAttempts = 0;
+    useFallback = false;
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const message = JSON.parse(event.data);
+      
+      if (message.type === 'initial' || message.type === 'full') {
+        // Full data update
+        updateDashboard(message.data);
+      } else if (message.type === 'update') {
+        // Incremental ticker update
+        updateTickerSentiment(message.ticker, message.bullish_amount, message.bearish_amount);
+      }
+    } catch (error) {
+      console.error('Error parsing WebSocket message:', error);
+    }
+  };
+
+  ws.onerror = (error) => {
+    console.error('WebSocket error:', error);
+  };
+
+  ws.onclose = () => {
+    console.log('WebSocket disconnected');
+    ws = null;
+    
+    // Attempt to reconnect with exponential backoff
+    wsReconnectAttempts++;
+    const delay = Math.min(1000 * Math.pow(2, wsReconnectAttempts), 30000);
+    
+    console.log(`Reconnecting in ${delay / 1000}s... (attempt ${wsReconnectAttempts})`);
+    
+    wsReconnectTimeout = setTimeout(() => {
+      if (wsReconnectAttempts > 3) {
+        console.log('⚠️ Falling back to HTTP polling');
+        useFallback = true;
+      }
+      connectWebSocket();
+    }, delay);
+  };
+}
+
+// Update a single ticker's sentiment (for incremental WebSocket updates)
+function updateTickerSentiment(ticker, bullishAmount, bearishAmount) {
+  // This is an incremental update, so we need to fetch full data or maintain state
+  // For simplicity, let's just trigger a full refresh
+  fetchSentiments();
 }
 
 function formatCurrency(amount) {
@@ -222,10 +293,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     initDarkMode();
     
     await fetchHoldings(); // Fetch holdings first
-    await fetchSentiments(); // Then fetch sentiments
+    await fetchSentiments(); // Initial fetch via HTTP
     
-    // Poll every 20 seconds for real-time sentiment updates
-    setInterval(fetchSentiments, 20000);
+    // Try to connect via WebSocket for real-time updates
+    connectWebSocket();
+    
+    // Fallback: Poll every 20 seconds if WebSocket fails
+    setInterval(() => {
+      if (useFallback || !ws || ws.readyState !== WebSocket.OPEN) {
+        fetchSentiments();
+      }
+    }, 20000);
   } catch (error) {
     console.error('Error initializing dashboard:', error);
   }
