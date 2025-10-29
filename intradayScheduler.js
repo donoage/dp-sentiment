@@ -5,7 +5,7 @@ class IntradayScheduler {
     this.schedulerInterval = null;
   }
 
-  // Check if market is open (9:30 AM - 4:00 PM ET, Monday-Friday)
+  // Check if market is open (9:30 AM - 5:00 PM ET, Monday-Friday)
   isMarketHours() {
     const now = new Date();
     const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
@@ -16,13 +16,13 @@ class IntradayScheduler {
       return false; // Weekend
     }
     
-    // Check time (9:30 AM - 4:00 PM ET)
+    // Check time (9:30 AM - 5:00 PM ET)
     const hours = etTime.getHours();
     const minutes = etTime.getMinutes();
     const timeInMinutes = hours * 60 + minutes;
     
     const marketOpen = 9 * 60 + 30;  // 9:30 AM
-    const marketClose = 16 * 60;      // 4:00 PM
+    const marketClose = 17 * 60;      // 5:00 PM
     
     return timeInMinutes >= marketOpen && timeInMinutes < marketClose;
   }
