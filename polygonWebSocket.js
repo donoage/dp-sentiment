@@ -159,6 +159,8 @@ class PolygonWebSocketClient {
       let amCount = 0;
       let tradeCount = 0;
       let darkpoolCount = 0;
+      let exchange4Count = 0;
+      let trfIdCount = 0;
 
       messages.forEach(msg => {
         if (msg.ev === 'status' && msg.status === 'auth_success') {
@@ -171,6 +173,9 @@ class PolygonWebSocketClient {
           this.handleMinuteAggregate(msg);
         } else if (msg.ev === 'T') {
           tradeCount++;
+          // Track exchange 4 and trfi separately for debugging
+          if (msg.x === 4) exchange4Count++;
+          if (msg.trfi !== undefined) trfIdCount++;
           const isDarkpool = this.handleTrade(msg);
           if (isDarkpool) darkpoolCount++;
         }
@@ -178,7 +183,7 @@ class PolygonWebSocketClient {
 
       // Log batch statistics (only if there were messages)
       if (amCount > 0 || tradeCount > 0) {
-        console.log(`📊 Batch: ${amCount} minute bars, ${tradeCount} trades (${darkpoolCount} darkpool)`);
+        console.log(`📊 Batch: ${amCount} minute bars, ${tradeCount} trades (${darkpoolCount} darkpool, ${exchange4Count} exch=4, ${trfIdCount} with trf_id)`);
       }
     } catch (error) {
       console.error('Error handling message:', error);
@@ -218,12 +223,24 @@ class PolygonWebSocketClient {
     const price = msg.p;
     const size = msg.s;
     const exchange = msg.x;
-    const trfId = msg.r; // TRF ID field
+    const trfId = msg.trfi; // TRF ID field (trfi per WebSocket API docs)
+    
+    // DEBUG: Log first few trades to see what data we're getting
+    if (Math.random() < 0.01) { // Log ~1% of trades to avoid spam
+      console.log(`[DEBUG] Trade sample for ${ticker}:`, {
+        exchange: exchange,
+        trfi: trfId,
+        price: price,
+        size: size,
+        conditions: msg.c
+      });
+    }
     
     // Dark pool trades are identified by:
     // 1. exchange ID of 4 (exchange: 4)
-    // 2. presence of a trf_id field
+    // 2. presence of a trfi field (Trade Reporting Facility ID)
     // Source: https://polygon.io/knowledge-base/article/does-polygon-offer-dark-pool-data
+    // WebSocket field reference: https://polygon.io/docs/websocket/stocks/trades
     const isDarkpool = exchange === 4 && trfId !== undefined;
     
     if (!isDarkpool) {
