@@ -61,17 +61,50 @@ class BroadcastServer {
     }
   }
 
-  // Broadcast sentiment update to all connected clients
+  // Broadcast sentiment update to all connected clients (throttled)
   async broadcastSentimentUpdate(ticker, bullishAmount, bearishAmount) {
     if (this.wss.clients.size === 0) {
       return; // No clients connected, skip broadcast
     }
 
+    // Throttle broadcasts - batch updates and send every 2 seconds
+    if (!this.pendingUpdates) {
+      this.pendingUpdates = new Map();
+      this.broadcastTimer = null;
+    }
+
+    // Accumulate the update
+    const existing = this.pendingUpdates.get(ticker) || { bullish: 0, bearish: 0 };
+    this.pendingUpdates.set(ticker, {
+      bullish: existing.bullish + parseFloat(bullishAmount),
+      bearish: existing.bearish + parseFloat(bearishAmount)
+    });
+
+    // Schedule broadcast if not already scheduled
+    if (!this.broadcastTimer) {
+      this.broadcastTimer = setTimeout(() => {
+        this.flushPendingUpdates();
+      }, 2000); // Batch updates every 2 seconds
+    }
+  }
+
+  flushPendingUpdates() {
+    if (!this.pendingUpdates || this.pendingUpdates.size === 0) {
+      return;
+    }
+
+    const updates = [];
+    this.pendingUpdates.forEach((amounts, ticker) => {
+      updates.push({
+        ticker: ticker,
+        bullish_amount: amounts.bullish.toFixed(2),
+        bearish_amount: amounts.bearish.toFixed(2)
+      });
+    });
+
     const message = JSON.stringify({
-      type: 'update',
-      ticker: ticker,
-      bullish_amount: bullishAmount,
-      bearish_amount: bearishAmount,
+      type: 'batch_update',
+      updates: updates,
       timestamp: new Date().toISOString()
     });
 
@@ -83,9 +116,11 @@ class BroadcastServer {
       }
     });
 
-    if (broadcastCount > 0) {
-      console.log(`📡 Broadcasted ${ticker} update to ${broadcastCount} clients`);
-    }
+    console.log(`📡 Broadcasted ${updates.length} ticker updates to ${broadcastCount} clients`);
+
+    // Clear pending updates
+    this.pendingUpdates.clear();
+    this.broadcastTimer = null;
   }
 
   // Broadcast full sentiment data (for periodic full updates)

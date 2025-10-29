@@ -9,6 +9,9 @@ let wsReconnectAttempts = 0;
 let wsReconnectTimeout = null;
 let useFallback = false;
 
+// Sentiment data cache (for incremental updates)
+let sentimentCache = {};
+
 // Fetch holdings configuration
 async function fetchHoldings() {
   try {
@@ -74,11 +77,33 @@ function connectWebSocket() {
       const message = JSON.parse(event.data);
       
       if (message.type === 'initial' || message.type === 'full') {
-        // Full data update
+        // Full data update - rebuild cache
+        sentimentCache = {};
+        message.data.forEach(ticker => {
+          sentimentCache[ticker.ticker] = {
+            bullish_amount: parseFloat(ticker.bullish_amount || 0),
+            bearish_amount: parseFloat(ticker.bearish_amount || 0),
+            last_updated: ticker.last_updated
+          };
+        });
         updateDashboard(message.data);
-      } else if (message.type === 'update') {
-        // Incremental ticker update
-        updateTickerSentiment(message.ticker, message.bullish_amount, message.bearish_amount);
+      } else if (message.type === 'batch_update') {
+        // Batch incremental updates
+        message.updates.forEach(update => {
+          if (!sentimentCache[update.ticker]) {
+            sentimentCache[update.ticker] = { bullish_amount: 0, bearish_amount: 0 };
+          }
+          sentimentCache[update.ticker].bullish_amount += parseFloat(update.bullish_amount);
+          sentimentCache[update.ticker].bearish_amount += parseFloat(update.bearish_amount);
+        });
+        // Update dashboard with cached data
+        const sentiments = Object.keys(sentimentCache).map(ticker => ({
+          ticker: ticker,
+          bullish_amount: sentimentCache[ticker].bullish_amount,
+          bearish_amount: sentimentCache[ticker].bearish_amount,
+          last_updated: sentimentCache[ticker].last_updated
+        }));
+        updateDashboard(sentiments);
       }
     } catch (error) {
       console.error('Error parsing WebSocket message:', error);
@@ -109,12 +134,7 @@ function connectWebSocket() {
   };
 }
 
-// Update a single ticker's sentiment (for incremental WebSocket updates)
-function updateTickerSentiment(ticker, bullishAmount, bearishAmount) {
-  // This is an incremental update, so we need to fetch full data or maintain state
-  // For simplicity, let's just trigger a full refresh
-  fetchSentiments();
-}
+// No longer needed - handled in ws.onmessage with batch updates
 
 function formatCurrency(amount) {
   const formatted = new Intl.NumberFormat('en-US', {
