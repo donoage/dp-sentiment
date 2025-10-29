@@ -146,6 +146,13 @@ h1 {
   color: #1f2937;
 }
 
+.weight-cell {
+  text-align: center;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
 .sentiment-cell {
   text-align: center;
 }

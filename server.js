@@ -23,6 +23,19 @@ app.get('/api/sentiments', async (req, res) => {
   }
 });
 
+// API endpoint to get holdings configuration
+app.get('/api/holdings', (req, res) => {
+  try {
+    res.json({
+      spy: config.SPY_TOP_20,
+      qqq: config.QQQ_TOP_20
+    });
+  } catch (error) {
+    console.error('Error fetching holdings:', error);
+    res.status(500).json({ error: 'Failed to fetch holdings' });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

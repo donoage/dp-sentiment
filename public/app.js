@@ -1,15 +1,23 @@
-// SPY and QQQ holdings
-const SPY_TICKERS = [
-  'NVDA', 'MSFT', 'AAPL', 'AMZN', 'META', 'AVGO', 'GOOGL', 'GOOG', 
-  'TSLA', 'BRK.B', 'JPM', 'JNJ', 'UNH', 'XOM', 'PG'
-];
+// Holdings data (will be fetched from server)
+let SPY_HOLDINGS = [];
+let QQQ_HOLDINGS = [];
+let ALL_TICKERS = [];
 
-const QQQ_TICKERS = [
-  'AAPL', 'MSFT', 'AMZN', 'NVDA', 'META', 'GOOGL', 'GOOG', 'TSLA',
-  'AVGO', 'PEP', 'COST', 'ADBE', 'CSCO', 'CMCSA', 'INTC'
-];
-
-const ALL_TICKERS = [...new Set([...SPY_TICKERS, ...QQQ_TICKERS])];
+// Fetch holdings configuration
+async function fetchHoldings() {
+  try {
+    const response = await fetch('/api/holdings');
+    const data = await response.json();
+    SPY_HOLDINGS = data.spy;
+    QQQ_HOLDINGS = data.qqq;
+    
+    const spyTickers = SPY_HOLDINGS.map(h => h.ticker);
+    const qqqTickers = QQQ_HOLDINGS.map(h => h.ticker);
+    ALL_TICKERS = [...new Set([...spyTickers, ...qqqTickers])];
+  } catch (error) {
+    console.error('Error fetching holdings:', error);
+  }
+}
 
 // Fetch and update sentiment data
 async function fetchSentiments() {
@@ -66,10 +74,10 @@ function updateDashboard(sentiments) {
   netElement.style.color = netSentiment > 0 ? '#10b981' : netSentiment < 0 ? '#ef4444' : '#3b82f6';
   
   // Update SPY table
-  updateTable('spyTable', SPY_TICKERS, sentimentMap);
+  updateTable('spyTable', SPY_HOLDINGS, sentimentMap, 'spy');
   
   // Update QQQ table
-  updateTable('qqqTable', QQQ_TICKERS, sentimentMap);
+  updateTable('qqqTable', QQQ_HOLDINGS, sentimentMap, 'qqq');
   
   // Update active tickers count in header
   const subtitle = document.querySelector('.subtitle');
@@ -78,11 +86,13 @@ function updateDashboard(sentiments) {
   }
 }
 
-function updateTable(tableId, tickers, sentimentMap) {
+function updateTable(tableId, holdings, sentimentMap, etfType) {
   const tbody = document.querySelector(`#${tableId} tbody`);
   tbody.innerHTML = '';
   
-  tickers.forEach(ticker => {
+  holdings.forEach(holding => {
+    const ticker = holding.ticker;
+    const weight = holding.weight;
     const data = sentimentMap[ticker] || {
       ticker: ticker,
       bullish_amount: 0,
@@ -117,6 +127,7 @@ function updateTable(tableId, tickers, sentimentMap) {
     row.className = rowClass;
     row.innerHTML = `
       <td class="ticker-cell"><strong>${ticker}</strong></td>
+      <td class="weight-cell">${weight.toFixed(2)}%</td>
       <td class="sentiment-cell">${sentimentBadge}</td>
       <td class="amount-cell bullish-text">${formatCurrency(bullishAmount)}</td>
       <td class="amount-cell bearish-text">${formatCurrency(bearishAmount)}</td>
@@ -127,9 +138,12 @@ function updateTable(tableId, tickers, sentimentMap) {
   });
 }
 
-// Initial fetch
-fetchSentiments();
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', async () => {
+  await fetchHoldings(); // Fetch holdings first
+  fetchSentiments(); // Then fetch sentiments
+});
 
-// Update every 10 seconds
-setInterval(fetchSentiments, 10000);
+// Update every 5 seconds
+setInterval(fetchSentiments, 5000);
 
