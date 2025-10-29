@@ -7,8 +7,12 @@ class PolygonWebSocketClient {
     this.apiKey = apiKey;
     this.ws = null;
     this.reconnectInterval = 5000;
+    this.reconnectAttempts = 0;
+    this.maxReconnectInterval = 60000; // Max 1 minute
     this.tickers = config.getAllTickers();
     this.currentPrices = {}; // Store current minute bar prices
+    this.marketCheckInterval = null;
+    this.shouldBeConnected = false;
   }
 
   // Check if market is open (9:30 AM - 4:00 PM ET, Monday-Friday)
@@ -36,18 +40,30 @@ class PolygonWebSocketClient {
   }
 
   connect() {
+    // Check if we should be connected based on market hours
+    if (!this.isMarketHours()) {
+      console.log('Market is closed. Not connecting to WebSocket.');
+      this.shouldBeConnected = false;
+      this.scheduleMarketHoursCheck();
+      return;
+    }
+
     // Prevent multiple connections
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       console.log('WebSocket already connected or connecting');
       return;
     }
 
+    this.shouldBeConnected = true;
     const wsUrl = `wss://socket.polygon.io/stocks`;
+    console.log(`Connecting to Polygon WebSocket (attempt ${this.reconnectAttempts + 1})...`);
     this.ws = new WebSocket(wsUrl);
 
     this.ws.on('open', () => {
       console.log('Connected to Polygon WebSocket');
+      this.reconnectAttempts = 0; // Reset on successful connection
       this.authenticate();
+      this.scheduleMarketHoursCheck();
     });
 
     this.ws.on('message', (data) => {
@@ -59,10 +75,49 @@ class PolygonWebSocketClient {
     });
 
     this.ws.on('close', () => {
-      console.log('WebSocket closed. Reconnecting...');
+      console.log('WebSocket closed.');
       this.ws = null; // Clear the reference
-      setTimeout(() => this.connect(), this.reconnectInterval);
+      
+      // Only reconnect if we should be connected (market hours)
+      if (this.shouldBeConnected && this.isMarketHours()) {
+        // Exponential backoff with jitter
+        this.reconnectAttempts++;
+        const backoff = Math.min(
+          this.reconnectInterval * Math.pow(2, this.reconnectAttempts - 1),
+          this.maxReconnectInterval
+        );
+        const jitter = Math.random() * 1000; // Add up to 1 second jitter
+        const delay = backoff + jitter;
+        
+        console.log(`Reconnecting in ${(delay / 1000).toFixed(1)}s...`);
+        setTimeout(() => this.connect(), delay);
+      } else {
+        console.log('Not reconnecting - market is closed');
+        this.scheduleMarketHoursCheck();
+      }
     });
+  }
+
+  scheduleMarketHoursCheck() {
+    // Clear existing interval
+    if (this.marketCheckInterval) {
+      clearInterval(this.marketCheckInterval);
+    }
+
+    // Check market hours every minute
+    this.marketCheckInterval = setInterval(() => {
+      const isMarketOpen = this.isMarketHours();
+      const isConnected = this.ws && this.ws.readyState === WebSocket.OPEN;
+
+      if (isMarketOpen && !isConnected) {
+        console.log('Market opened - connecting WebSocket...');
+        this.connect();
+      } else if (!isMarketOpen && isConnected) {
+        console.log('Market closed - disconnecting WebSocket...');
+        this.shouldBeConnected = false;
+        this.disconnect();
+      }
+    }, 60000); // Check every minute
   }
 
   authenticate() {
@@ -73,20 +128,23 @@ class PolygonWebSocketClient {
   }
 
   subscribe() {
-    // Subscribe to all tickers using * wildcard, then filter client-side
-    // This avoids WebSocket connection limits and subscription string length issues
+    // Subscribe to specific tickers only to reduce data usage
+    // Format: AM.TICKER for minute aggregates, T.TICKER for trades
+    const amParams = this.tickers.map(t => `AM.${t}`).join(',');
+    const tParams = this.tickers.map(t => `T.${t}`).join(',');
+    
     this.ws.send(JSON.stringify({
       action: 'subscribe',
-      params: 'AM.*'
+      params: amParams
     }));
-    console.log('Subscribed to minute aggregates for all tickers');
+    console.log(`Subscribed to minute aggregates for ${this.tickers.length} tickers`);
 
     this.ws.send(JSON.stringify({
       action: 'subscribe',
-      params: 'T.*'
+      params: tParams
     }));
-    console.log('Subscribed to trades for all tickers');
-    console.log(`Filtering for ${this.tickers.length} tickers: ${this.tickers.join(', ')}`);
+    console.log(`Subscribed to trades for ${this.tickers.length} tickers`);
+    console.log(`Tracking: ${this.tickers.join(', ')}`);
   }
 
   handleMessage(data) {
@@ -97,18 +155,31 @@ class PolygonWebSocketClient {
         return;
       }
 
+      // Track message counts for monitoring
+      let amCount = 0;
+      let tradeCount = 0;
+      let darkpoolCount = 0;
+
       messages.forEach(msg => {
         if (msg.ev === 'status' && msg.status === 'auth_success') {
-          console.log('Authentication successful');
+          console.log('✅ Authentication successful');
           this.subscribe();
+        } else if (msg.ev === 'status' && msg.status === 'success') {
+          console.log(`✅ ${msg.message}`);
         } else if (msg.ev === 'AM') {
-          // Minute aggregate - update current price
+          amCount++;
           this.handleMinuteAggregate(msg);
         } else if (msg.ev === 'T') {
-          // Trade - check if it's darkpool
-          this.handleTrade(msg);
+          tradeCount++;
+          const isDarkpool = this.handleTrade(msg);
+          if (isDarkpool) darkpoolCount++;
         }
       });
+
+      // Log batch statistics (only if there were messages)
+      if (amCount > 0 || tradeCount > 0) {
+        console.log(`📊 Batch: ${amCount} minute bars, ${tradeCount} trades (${darkpoolCount} darkpool)`);
+      }
     } catch (error) {
       console.error('Error handling message:', error);
     }
@@ -123,11 +194,12 @@ class PolygonWebSocketClient {
     }
     
     const closePrice = msg.c;
+    const volume = msg.v;
     
     // Update current price for this ticker
     this.currentPrices[ticker] = closePrice;
     
-    console.log(`[${ticker}] Minute bar close: $${closePrice}`);
+    console.log(`[${ticker}] Minute bar: $${closePrice} (vol: ${volume})`);
   }
 
   handleTrade(msg) {
@@ -135,12 +207,12 @@ class PolygonWebSocketClient {
     
     // Only process tickers we're tracking
     if (!this.tickers.includes(ticker)) {
-      return;
+      return false;
     }
     
     // Only process trades during market hours
     if (!this.isMarketHours()) {
-      return;
+      return false;
     }
 
     const price = msg.p;
@@ -157,7 +229,7 @@ class PolygonWebSocketClient {
     const isDarkpool = conditions.some(c => darkpoolConditions.includes(c));
     
     if (!isDarkpool) {
-      return;
+      return false;
     }
 
     // Get current minute bar price
@@ -165,7 +237,7 @@ class PolygonWebSocketClient {
     
     if (!currentPrice) {
       // No current price yet, skip
-      return;
+      return false;
     }
 
     // Calculate trade value
@@ -179,20 +251,29 @@ class PolygonWebSocketClient {
     
     if (price < currentPrice) {
       bullishAmount = tradeValue;
-      console.log(`[${ticker}] BULLISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (below $${currentPrice})`);
+      console.log(`[${ticker}] 🟢 BULLISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (below $${currentPrice})`);
     } else if (price > currentPrice) {
       bearishAmount = tradeValue;
-      console.log(`[${ticker}] BEARISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (above $${currentPrice})`);
+      console.log(`[${ticker}] 🔴 BEARISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (above $${currentPrice})`);
     }
     
     // Update database
     if (bullishAmount > 0 || bearishAmount > 0) {
       updateSentiment(ticker, bullishAmount, bearishAmount);
+      return true;
     }
+    
+    return false;
   }
 
   disconnect() {
+    if (this.marketCheckInterval) {
+      clearInterval(this.marketCheckInterval);
+      this.marketCheckInterval = null;
+    }
+    
     if (this.ws) {
+      this.shouldBeConnected = false;
       this.ws.close();
     }
   }
