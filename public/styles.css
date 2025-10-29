@@ -228,7 +228,8 @@ body.dark-mode .toggle-icon {
   text-align: right;
   font-family: 'Monaco', 'Courier New', monospace;
   font-size: 0.9rem;
-  min-width: 110px;
+  min-width: 180px;
+  white-space: nowrap;
 }
 
 .bullish-text {
