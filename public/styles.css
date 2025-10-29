@@ -292,6 +292,118 @@ body.dark-mode .badge-waiting {
   color: #6b7280;
 }
 
+.badge-strong {
+  font-weight: 700;
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+.badge-strong-bullish {
+  background: #10b981;
+  color: white;
+}
+
+.badge-strong-bearish {
+  background: #ef4444;
+  color: white;
+}
+
+.badge-extreme {
+  font-weight: 800;
+  animation: pulse-glow 1.5s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.badge-extreme-bullish {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: 2px solid #34d399;
+}
+
+.badge-extreme-bearish {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: 2px solid #f87171;
+}
+
+body.dark-mode .badge-strong-bullish {
+  background: #059669;
+  color: #d1fae5;
+}
+
+body.dark-mode .badge-strong-bearish {
+  background: #dc2626;
+  color: #fee2e2;
+}
+
+body.dark-mode .badge-extreme-bullish {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #d1fae5;
+  border-color: #10b981;
+}
+
+body.dark-mode .badge-extreme-bearish {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: #fee2e2;
+  border-color: #ef4444;
+}
+
+.strong-row {
+  background: rgba(255, 215, 0, 0.05);
+  border-left: 4px solid #fbbf24;
+}
+
+.extreme-row {
+  background: rgba(255, 215, 0, 0.1);
+  border-left: 4px solid #f59e0b;
+  font-weight: 600;
+}
+
+.extreme-bullish-row {
+  border-left-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.extreme-bearish-row {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+body.dark-mode .strong-row {
+  background: rgba(251, 191, 36, 0.1);
+}
+
+body.dark-mode .extreme-row {
+  background: rgba(245, 158, 11, 0.15);
+}
+
+body.dark-mode .extreme-bullish-row {
+  background: rgba(16, 185, 129, 0.15);
+}
+
+body.dark-mode .extreme-bearish-row {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  }
+}
+
 .inactive-row {
   opacity: 0.5;
 }

@@ -136,11 +136,35 @@ function updateTable(tableId, holdings, sentimentMap, etfType) {
     const net = bullishAmount - bearishAmount;
     const hasActivity = bullishAmount > 0 || bearishAmount > 0;
     
+    // Calculate sentiment strength and bias
+    const totalVolume = bullishAmount + bearishAmount;
+    const bullishPercent = totalVolume > 0 ? (bullishAmount / totalVolume) * 100 : 0;
+    const bearishPercent = totalVolume > 0 ? (bearishAmount / totalVolume) * 100 : 0;
+    const minThreshold = 250000; // $250K minimum for extreme detection
+    
     let sentimentBadge = '';
     let sentimentText = 'Waiting...';
     let rowClass = hasActivity ? '' : 'inactive-row';
+    let extremeBadge = '';
     
     if (hasActivity) {
+      // Check for extreme sentiment
+      if (Math.abs(net) >= minThreshold) {
+        if (bullishPercent >= 85) {
+          extremeBadge = '<span class="badge badge-extreme badge-extreme-bullish">⚡ EXTREME BULLISH</span>';
+          rowClass += ' extreme-row extreme-bullish-row';
+        } else if (bearishPercent >= 85) {
+          extremeBadge = '<span class="badge badge-extreme badge-extreme-bearish">⚡ EXTREME BEARISH</span>';
+          rowClass += ' extreme-row extreme-bearish-row';
+        } else if (bullishPercent >= 70) {
+          extremeBadge = '<span class="badge badge-strong badge-strong-bullish">🔥 Strong Bullish</span>';
+          rowClass += ' strong-row';
+        } else if (bearishPercent >= 70) {
+          extremeBadge = '<span class="badge badge-strong badge-strong-bearish">❄️ Strong Bearish</span>';
+          rowClass += ' strong-row';
+        }
+      }
+      
       if (net > 0) {
         sentimentBadge = '<span class="badge badge-bullish">🟢 Bullish</span>';
         sentimentText = 'Bullish';
@@ -158,7 +182,7 @@ function updateTable(tableId, holdings, sentimentMap, etfType) {
     const row = document.createElement('tr');
     row.className = rowClass;
     row.innerHTML = `
-      <td class="ticker-cell"><strong>${ticker}</strong></td>
+      <td class="ticker-cell"><strong>${ticker}</strong> ${extremeBadge}</td>
       <td class="weight-cell">${weight.toFixed(2)}%</td>
       <td class="sentiment-cell">${sentimentBadge}</td>
       <td class="amount-cell bullish-text">${formatCurrency(bullishAmount)}</td>
