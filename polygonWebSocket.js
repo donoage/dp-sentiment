@@ -11,6 +11,30 @@ class PolygonWebSocketClient {
     this.currentPrices = {}; // Store current minute bar prices
   }
 
+  // Check if market is open (9:30 AM - 4:00 PM ET, Monday-Friday)
+  isMarketHours() {
+    const now = new Date();
+    
+    // Convert to ET (UTC-5 or UTC-4 depending on DST)
+    const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    
+    // Check if weekday (0 = Sunday, 6 = Saturday)
+    const day = etTime.getDay();
+    if (day === 0 || day === 6) {
+      return false; // Weekend
+    }
+    
+    // Check time (9:30 AM - 4:00 PM ET)
+    const hours = etTime.getHours();
+    const minutes = etTime.getMinutes();
+    const timeInMinutes = hours * 60 + minutes;
+    
+    const marketOpen = 9 * 60 + 30;  // 9:30 AM
+    const marketClose = 16 * 60;      // 4:00 PM
+    
+    return timeInMinutes >= marketOpen && timeInMinutes < marketClose;
+  }
+
   connect() {
     const wsUrl = `wss://socket.polygon.io/stocks`;
     this.ws = new WebSocket(wsUrl);
@@ -42,20 +66,20 @@ class PolygonWebSocketClient {
   }
 
   subscribe() {
-    // Subscribe to minute aggregates for all tickers to get current prices
-    const tickerList = this.tickers.join(',');
+    // Subscribe to all tickers using * wildcard, then filter client-side
+    // This avoids WebSocket connection limits and subscription string length issues
     this.ws.send(JSON.stringify({
       action: 'subscribe',
-      params: `AM.${tickerList}`
+      params: 'AM.*'
     }));
-    console.log(`Subscribed to minute aggregates for: ${tickerList}`);
+    console.log('Subscribed to minute aggregates for all tickers');
 
-    // Subscribe to trades for darkpool detection
     this.ws.send(JSON.stringify({
       action: 'subscribe',
-      params: `T.${tickerList}`
+      params: 'T.*'
     }));
-    console.log(`Subscribed to trades for: ${tickerList}`);
+    console.log('Subscribed to trades for all tickers');
+    console.log(`Filtering for ${this.tickers.length} tickers: ${this.tickers.join(', ')}`);
   }
 
   handleMessage(data) {
@@ -85,6 +109,12 @@ class PolygonWebSocketClient {
 
   handleMinuteAggregate(msg) {
     const ticker = msg.sym;
+    
+    // Only process tickers we're tracking
+    if (!this.tickers.includes(ticker)) {
+      return;
+    }
+    
     const closePrice = msg.c;
     
     // Update current price for this ticker
@@ -95,6 +125,17 @@ class PolygonWebSocketClient {
 
   handleTrade(msg) {
     const ticker = msg.sym;
+    
+    // Only process tickers we're tracking
+    if (!this.tickers.includes(ticker)) {
+      return;
+    }
+    
+    // Only process trades during market hours
+    if (!this.isMarketHours()) {
+      return;
+    }
+
     const price = msg.p;
     const size = msg.s;
     const conditions = msg.c || [];
