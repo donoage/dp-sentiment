@@ -43,7 +43,7 @@ async function initDatabase() {
       )
     `);
     
-    -- Create index for faster queries by date
+    // Create index for faster queries by date
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_intraday_snapshot_time 
       ON intraday_sentiment_snapshot(snapshot_time DESC)
