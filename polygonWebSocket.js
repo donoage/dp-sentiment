@@ -36,6 +36,12 @@ class PolygonWebSocketClient {
   }
 
   connect() {
+    // Prevent multiple connections
+    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+      console.log('WebSocket already connected or connecting');
+      return;
+    }
+
     const wsUrl = `wss://socket.polygon.io/stocks`;
     this.ws = new WebSocket(wsUrl);
 
@@ -54,6 +60,7 @@ class PolygonWebSocketClient {
 
     this.ws.on('close', () => {
       console.log('WebSocket closed. Reconnecting...');
+      this.ws = null; // Clear the reference
       setTimeout(() => this.connect(), this.reconnectInterval);
     });
   }

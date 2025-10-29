@@ -9,6 +9,9 @@ const config = require('./config');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Single WebSocket client instance
+let wsClient = null;
+
 // Middleware
 app.use(express.json());
 app.use(express.static('public'));
@@ -49,15 +52,19 @@ async function startServer() {
     await initDatabase();
     console.log('Database initialized');
 
-    // Start WebSocket client
-    const apiKey = process.env.POLYGON_API_KEY;
-    if (!apiKey) {
-      throw new Error('POLYGON_API_KEY not found in environment variables');
-    }
+    // Start WebSocket client (singleton)
+    if (!wsClient) {
+      const apiKey = process.env.POLYGON_API_KEY;
+      if (!apiKey) {
+        throw new Error('POLYGON_API_KEY not found in environment variables');
+      }
 
-    const wsClient = new PolygonWebSocketClient(apiKey);
-    wsClient.connect();
-    console.log('WebSocket client started');
+      wsClient = new PolygonWebSocketClient(apiKey);
+      wsClient.connect();
+      console.log('WebSocket client started');
+    } else {
+      console.log('WebSocket client already running');
+    }
 
     // Start Express server
     app.listen(PORT, () => {
