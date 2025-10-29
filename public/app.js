@@ -224,9 +224,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await fetchHoldings(); // Fetch holdings first
     await fetchSentiments(); // Then fetch sentiments
     
-    // Poll every 30 seconds to reduce network usage
-    // Data updates are not time-critical for this dashboard
-    setInterval(fetchSentiments, 30000);
+    // Poll every 20 seconds for real-time sentiment updates
+    setInterval(fetchSentiments, 20000);
   } catch (error) {
     console.error('Error initializing dashboard:', error);
   }
