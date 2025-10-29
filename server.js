@@ -3,9 +3,10 @@ const http = require('http');
 const path = require('path');
 require('dotenv').config();
 
-const { initDatabase, getAllSentiments, getEODSnapshots } = require('./database');
+const { initDatabase, getAllSentiments, getEODSnapshots, getIntradaySnapshots } = require('./database');
 const PolygonWebSocketClient = require('./polygonWebSocket');
 const EODScheduler = require('./eodScheduler');
+const IntradayScheduler = require('./intradayScheduler');
 const BroadcastServer = require('./broadcastServer');
 const config = require('./config');
 
@@ -21,6 +22,9 @@ let broadcastServer = null;
 
 // EOD Scheduler instance
 let eodScheduler = null;
+
+// Intraday Scheduler instance
+let intradayScheduler = null;
 
 // Middleware
 app.use(express.json());
@@ -59,6 +63,19 @@ app.get('/api/eod-snapshots', async (req, res) => {
   } catch (error) {
     console.error('Error fetching EOD snapshots:', error);
     res.status(500).json({ error: 'Failed to fetch EOD snapshots' });
+  }
+});
+
+// API endpoint to get intraday snapshots
+app.get('/api/intraday-snapshots', async (req, res) => {
+  try {
+    const date = req.query.date; // Optional: YYYY-MM-DD format
+    const limit = parseInt(req.query.limit) || 100;
+    const snapshots = await getIntradaySnapshots(date, limit);
+    res.json(snapshots);
+  } catch (error) {
+    console.error('Error fetching intraday snapshots:', error);
+    res.status(500).json({ error: 'Failed to fetch intraday snapshots' });
   }
 });
 
@@ -110,6 +127,15 @@ async function startServer() {
       console.log('EOD Scheduler started');
     } else {
       console.log('EOD Scheduler already running');
+    }
+
+    // Start Intraday Scheduler
+    if (!intradayScheduler) {
+      intradayScheduler = new IntradayScheduler();
+      intradayScheduler.start();
+      console.log('Intraday Scheduler started');
+    } else {
+      console.log('Intraday Scheduler already running');
     }
 
     // Start HTTP server

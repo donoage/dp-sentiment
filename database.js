@@ -31,6 +31,24 @@ async function initDatabase() {
       )
     `);
     
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS intraday_sentiment_snapshot (
+        id SERIAL PRIMARY KEY,
+        snapshot_time TIMESTAMP NOT NULL,
+        total_bullish DECIMAL(20, 2) NOT NULL,
+        total_bearish DECIMAL(20, 2) NOT NULL,
+        net_sentiment DECIMAL(20, 2) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(snapshot_time)
+      )
+    `);
+    
+    -- Create index for faster queries by date
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_intraday_snapshot_time 
+      ON intraday_sentiment_snapshot(snapshot_time DESC)
+    `);
+    
     console.log('Database schema initialized');
   } catch (error) {
     console.error('Error initializing database:', error);
@@ -167,6 +185,103 @@ async function getEODSnapshots(limit = 30) {
   }
 }
 
+// Save intraday sentiment snapshot (every 15 minutes)
+async function saveIntradaySnapshot() {
+  const client = await pool.connect();
+  try {
+    // Get current totals
+    const result = await client.query(`
+      SELECT 
+        COALESCE(SUM(bullish_amount), 0) as total_bullish,
+        COALESCE(SUM(bearish_amount), 0) as total_bearish
+      FROM ticker_sentiment
+    `);
+    
+    if (result.rows.length === 0) {
+      console.log('No sentiment data to snapshot');
+      return null;
+    }
+    
+    const totalBullish = parseFloat(result.rows[0].total_bullish);
+    const totalBearish = parseFloat(result.rows[0].total_bearish);
+    const netSentiment = totalBullish - totalBearish;
+    
+    // Get current time in ET timezone
+    const now = new Date();
+    const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    
+    // Round to nearest 15 minutes
+    const minutes = etTime.getMinutes();
+    const roundedMinutes = Math.floor(minutes / 15) * 15;
+    etTime.setMinutes(roundedMinutes, 0, 0); // Set seconds and ms to 0
+    
+    const snapshotTime = etTime.toISOString();
+    
+    // Insert snapshot (or update if already exists for this time)
+    await client.query(`
+      INSERT INTO intraday_sentiment_snapshot (snapshot_time, total_bullish, total_bearish, net_sentiment)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (snapshot_time)
+      DO UPDATE SET
+        total_bullish = $2,
+        total_bearish = $3,
+        net_sentiment = $4,
+        created_at = CURRENT_TIMESTAMP
+    `, [snapshotTime, totalBullish, totalBearish, netSentiment]);
+    
+    console.log(`💾 Intraday snapshot saved: ${etTime.toLocaleTimeString('en-US', { timeZone: 'America/New_York' })} - Bullish=$${totalBullish.toFixed(2)}, Bearish=$${totalBearish.toFixed(2)}, Net=$${netSentiment.toFixed(2)}`);
+    
+    return {
+      snapshot_time: snapshotTime,
+      total_bullish: totalBullish,
+      total_bearish: totalBearish,
+      net_sentiment: netSentiment
+    };
+  } catch (error) {
+    console.error('Error saving intraday snapshot:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Get intraday snapshots for a specific date
+async function getIntradaySnapshots(date, limit = 100) {
+  const client = await pool.connect();
+  try {
+    let query;
+    let params;
+    
+    if (date) {
+      // Get snapshots for specific date
+      query = `
+        SELECT snapshot_time, total_bullish, total_bearish, net_sentiment, created_at
+        FROM intraday_sentiment_snapshot
+        WHERE DATE(snapshot_time) = $1
+        ORDER BY snapshot_time ASC
+      `;
+      params = [date];
+    } else {
+      // Get recent snapshots
+      query = `
+        SELECT snapshot_time, total_bullish, total_bearish, net_sentiment, created_at
+        FROM intraday_sentiment_snapshot
+        ORDER BY snapshot_time DESC
+        LIMIT $1
+      `;
+      params = [limit];
+    }
+    
+    const result = await client.query(query, params);
+    return result.rows;
+  } catch (error) {
+    console.error('Error getting intraday snapshots:', error);
+    return [];
+  } finally {
+    client.release();
+  }
+}
+
 // Save holdings cache to database
 async function saveHoldingsCache(spy, qqq) {
   const client = await pool.connect();
@@ -234,6 +349,8 @@ module.exports = {
   resetSentiments,
   saveEODSnapshot,
   getEODSnapshots,
+  saveIntradaySnapshot,
+  getIntradaySnapshots,
   saveHoldingsCache,
   loadHoldingsCache
 };
