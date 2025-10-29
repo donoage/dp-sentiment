@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const { initDatabase, getAllSentiments } = require('./database');
 const PolygonWebSocketClient = require('./polygonWebSocket');
+const config = require('./config');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
