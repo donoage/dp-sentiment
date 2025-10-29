@@ -74,6 +74,15 @@ async function startServer() {
     await initDatabase();
     console.log('Database initialized');
 
+    // Initialize ETF holdings (fetch from StockAnalysis.com)
+    await config.initialize();
+    console.log('ETF holdings initialized');
+
+    // Schedule daily holdings refresh (every 6 hours)
+    setInterval(async () => {
+      await config.refresh();
+    }, 6 * 60 * 60 * 1000); // 6 hours
+
     // Start broadcast WebSocket server for clients
     if (!broadcastServer) {
       broadcastServer = new BroadcastServer(server);
