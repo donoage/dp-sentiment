@@ -12,7 +12,7 @@ body {
 }
 
 .container {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -81,7 +81,7 @@ h1 {
 
 .tables-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(700px, 1fr));
   gap: 30px;
   margin-bottom: 40px;
 }
@@ -116,7 +116,7 @@ h1 {
 }
 
 .sentiment-table th {
-  padding: 14px 12px;
+  padding: 14px 16px;
   text-align: left;
   font-weight: 600;
   text-transform: uppercase;
@@ -138,7 +138,7 @@ h1 {
 }
 
 .sentiment-table td {
-  padding: 14px 12px;
+  padding: 14px 16px;
 }
 
 .ticker-cell {
@@ -161,6 +161,7 @@ h1 {
   text-align: right;
   font-family: 'Monaco', 'Courier New', monospace;
   font-size: 0.9rem;
+  min-width: 110px;
 }
 
 .bullish-text {
