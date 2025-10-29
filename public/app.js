@@ -7,15 +7,26 @@ let ALL_TICKERS = [];
 async function fetchHoldings() {
   try {
     const response = await fetch('/api/holdings');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
+    
+    if (!data.spy || !data.qqq) {
+      throw new Error('Invalid holdings data received');
+    }
+    
     SPY_HOLDINGS = data.spy;
     QQQ_HOLDINGS = data.qqq;
     
     const spyTickers = SPY_HOLDINGS.map(h => h.ticker);
     const qqqTickers = QQQ_HOLDINGS.map(h => h.ticker);
     ALL_TICKERS = [...new Set([...spyTickers, ...qqqTickers])];
+    
+    console.log(`Loaded ${SPY_HOLDINGS.length} SPY holdings and ${QQQ_HOLDINGS.length} QQQ holdings`);
   } catch (error) {
     console.error('Error fetching holdings:', error);
+    throw error; // Re-throw to prevent initialization from continuing
   }
 }
 
@@ -23,10 +34,14 @@ async function fetchHoldings() {
 async function fetchSentiments() {
   try {
     const response = await fetch('/api/sentiments');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
     updateDashboard(data);
   } catch (error) {
     console.error('Error fetching sentiments:', error);
+    // Don't throw - allow retries via interval
   }
 }
 
@@ -90,6 +105,11 @@ function updateTable(tableId, holdings, sentimentMap, etfType) {
   const tbody = document.querySelector(`#${tableId} tbody`);
   tbody.innerHTML = '';
   
+  // Don't update if holdings aren't loaded yet
+  if (!holdings || holdings.length === 0) {
+    return;
+  }
+  
   holdings.forEach(holding => {
     const ticker = holding.ticker;
     const weight = holding.weight;
@@ -140,10 +160,14 @@ function updateTable(tableId, holdings, sentimentMap, etfType) {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
-  await fetchHoldings(); // Fetch holdings first
-  fetchSentiments(); // Then fetch sentiments
+  try {
+    await fetchHoldings(); // Fetch holdings first
+    await fetchSentiments(); // Then fetch sentiments
+    
+    // Only start interval after initial load is complete
+    setInterval(fetchSentiments, 5000);
+  } catch (error) {
+    console.error('Error initializing dashboard:', error);
+  }
 });
-
-// Update every 5 seconds
-setInterval(fetchSentiments, 5000);
 
