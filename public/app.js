@@ -46,12 +46,24 @@ async function fetchSentiments() {
 }
 
 function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-US', {
+  const formatted = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   }).format(amount);
+  
+  // Add abbreviated format in parentheses
+  let abbreviated = '';
+  const absAmount = Math.abs(amount);
+  
+  if (absAmount >= 1000000000) {
+    abbreviated = `(${(amount / 1000000000).toFixed(2)}B)`;
+  } else if (absAmount >= 1000000) {
+    abbreviated = `(${(amount / 1000000).toFixed(2)}M)`;
+  }
+  
+  return abbreviated ? `${formatted} ${abbreviated}` : formatted;
 }
 
 function updateDashboard(sentiments) {
