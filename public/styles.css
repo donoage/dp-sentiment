@@ -208,6 +208,7 @@ body.dark-mode .toggle-icon {
 
 .sentiment-table td {
   padding: 14px 16px;
+  text-align: left;
 }
 
 .ticker-cell {
@@ -218,22 +219,18 @@ body.dark-mode .toggle-icon {
 }
 
 .weight-cell {
-  text-align: center;
   font-weight: 600;
   color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
 .sentiment-cell {
-  text-align: center;
 }
 
 .amount-cell {
-  text-align: right;
   font-family: 'Monaco', 'Courier New', monospace;
   font-size: 0.85rem;
   white-space: nowrap;
-  padding-right: 12px;
 }
 
 .bullish-text {
