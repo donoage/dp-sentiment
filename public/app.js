@@ -170,9 +170,33 @@ function updateTable(tableId, holdings, sentimentMap, etfType) {
   });
 }
 
+// Dark mode functionality
+function initDarkMode() {
+  const darkModeToggle = document.getElementById('darkModeToggle');
+  const toggleIcon = darkModeToggle.querySelector('.toggle-icon');
+  
+  // Check for saved dark mode preference
+  const isDarkMode = localStorage.getItem('darkMode') === 'true';
+  if (isDarkMode) {
+    document.body.classList.add('dark-mode');
+    toggleIcon.textContent = '☀️';
+  }
+  
+  // Toggle dark mode
+  darkModeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isNowDark = document.body.classList.contains('dark-mode');
+    toggleIcon.textContent = isNowDark ? '☀️' : '🌙';
+    localStorage.setItem('darkMode', isNowDark);
+  });
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
   try {
+    // Initialize dark mode
+    initDarkMode();
+    
     await fetchHoldings(); // Fetch holdings first
     await fetchSentiments(); // Then fetch sentiments
     

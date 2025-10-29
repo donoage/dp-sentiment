@@ -4,11 +4,38 @@
   box-sizing: border-box;
 }
 
+:root {
+  --bg-gradient-start: #667eea;
+  --bg-gradient-end: #764ba2;
+  --card-bg: #ffffff;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --border-color: #e5e7eb;
+  --hover-bg: #f9fafb;
+  --inactive-bg: #f9fafb;
+  --table-header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+body.dark-mode {
+  --bg-gradient-start: #1a1a2e;
+  --bg-gradient-end: #16213e;
+  --card-bg: #0f172a;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #64748b;
+  --border-color: #334155;
+  --hover-bg: #1e293b;
+  --inactive-bg: #1e293b;
+  --table-header-bg: linear-gradient(135deg, #4338ca 0%, #7c3aed 100%);
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
   min-height: 100vh;
   padding: 20px;
+  transition: background 0.3s ease;
 }
 
 .container {
@@ -22,10 +49,48 @@ header {
   margin-bottom: 40px;
 }
 
+.header-top {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+}
+
 h1 {
   font-size: 2.5rem;
   margin-bottom: 10px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode-toggle {
+  position: absolute;
+  right: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.dark-mode-toggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.toggle-icon {
+  font-size: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+body.dark-mode .toggle-icon {
+  content: '☀️';
 }
 
 .subtitle {
@@ -47,16 +112,17 @@ h1 {
 }
 
 .summary-card {
-  background: white;
+  background: var(--card-bg);
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   text-align: center;
+  transition: background 0.3s ease;
 }
 
 .summary-card h3 {
   font-size: 1rem;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -87,15 +153,16 @@ h1 {
 }
 
 .table-section {
-  background: white;
+  background: var(--card-bg);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: background 0.3s ease;
 }
 
 .table-title {
   font-size: 1.5rem;
-  color: #1f2937;
+  color: var(--text-primary);
   margin-bottom: 20px;
   font-weight: 700;
 }
@@ -111,7 +178,7 @@ h1 {
 }
 
 .sentiment-table thead {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--table-header-bg);
   color: white;
 }
 
@@ -125,12 +192,12 @@ h1 {
 }
 
 .sentiment-table tbody tr {
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
   transition: background-color 0.2s;
 }
 
 .sentiment-table tbody tr:hover {
-  background-color: #f9fafb;
+  background-color: var(--hover-bg);
 }
 
 .sentiment-table tbody tr:last-child {
@@ -143,13 +210,13 @@ h1 {
 
 .ticker-cell {
   font-size: 1.1rem;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .weight-cell {
   text-align: center;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
@@ -205,20 +272,40 @@ h1 {
   color: #9ca3af;
 }
 
+body.dark-mode .badge-bullish {
+  background: #064e3b;
+  color: #6ee7b7;
+}
+
+body.dark-mode .badge-bearish {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+
+body.dark-mode .badge-neutral {
+  background: #374151;
+  color: #d1d5db;
+}
+
+body.dark-mode .badge-waiting {
+  background: #1f2937;
+  color: #6b7280;
+}
+
 .inactive-row {
   opacity: 0.5;
 }
 
 .inactive-row .ticker-cell {
-  color: #9ca3af;
+  color: var(--text-tertiary);
 }
 
 .ticker-card {
-  background: white;
+  background: var(--card-bg);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.3s ease;
 }
 
 .ticker-card:hover {
@@ -228,11 +315,11 @@ h1 {
 
 .ticker-card.inactive {
   opacity: 0.6;
-  background: #f9fafb;
+  background: var(--inactive-bg);
 }
 
 .ticker-card.inactive .ticker-symbol {
-  color: #9ca3af;
+  color: var(--text-tertiary);
 }
 
 .ticker-card.inactive:hover {
@@ -251,7 +338,7 @@ h1 {
 .ticker-symbol {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .sentiment-badge {
