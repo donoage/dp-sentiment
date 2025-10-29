@@ -214,11 +214,14 @@ class PolygonWebSocketClient {
     // WebSocket field reference: https://polygon.io/docs/websocket/stocks/trades
     const isDarkpool = exchange === 4 && trfId !== undefined;
     
+    // Update current price with every lit exchange trade (non-darkpool)
+    // This gives us real-time market price for comparison
     if (!isDarkpool) {
+      this.currentPrices[ticker] = price;
       return false;
     }
 
-    // Get current minute bar price
+    // Get current market price (from most recent lit exchange trade)
     const currentPrice = this.currentPrices[ticker];
     
     if (!currentPrice) {
@@ -229,18 +232,18 @@ class PolygonWebSocketClient {
     // Calculate trade value
     const tradeValue = price * size;
     
-    // Determine sentiment based on trade price vs current market price
-    // Trade below current price = bullish (buyers willing to pay market price)
-    // Trade above current price = bearish (sellers getting premium)
+    // Determine sentiment based on darkpool trade price vs current market price
+    // Trade above current price = bullish (buyer paid premium = aggressive/strong demand)
+    // Trade below current price = bearish (seller accepted discount = weak hands/desperation)
     let bullishAmount = 0;
     let bearishAmount = 0;
     
-    if (price < currentPrice) {
+    if (price > currentPrice) {
       bullishAmount = tradeValue;
-      console.log(`[${ticker}] 🟢 BULLISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (below $${currentPrice})`);
-    } else if (price > currentPrice) {
+      console.log(`[${ticker}] 🟢 BULLISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (above $${currentPrice})`);
+    } else if (price < currentPrice) {
       bearishAmount = tradeValue;
-      console.log(`[${ticker}] 🔴 BEARISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (above $${currentPrice})`);
+      console.log(`[${ticker}] 🔴 BEARISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (below $${currentPrice})`);
     }
     
     // Update database
