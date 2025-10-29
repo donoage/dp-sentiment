@@ -217,16 +217,14 @@ class PolygonWebSocketClient {
 
     const price = msg.p;
     const size = msg.s;
-    const conditions = msg.c || [];
+    const exchange = msg.x;
+    const trfId = msg.r; // TRF ID field
     
-    // Darkpool condition codes based on Polygon.io documentation
-    // These represent trades executed in dark pools and alternative trading systems
-    // Common darkpool conditions include:
-    // 12 = Form T (late reporting), 37 = Odd Lot Trade, 38 = Odd Lot Cross Trade
-    // 52 = Intermarket Sweep, 53 = Derivatively Priced, 54 = Re-opening Prints
-    // 55 = Closing Prints, 56 = Qualified Contingent Trade (QCT)
-    const darkpoolConditions = [12, 37, 38, 52, 53, 54, 55, 56];
-    const isDarkpool = conditions.some(c => darkpoolConditions.includes(c));
+    // Dark pool trades are identified by:
+    // 1. exchange ID of 4 (exchange: 4)
+    // 2. presence of a trf_id field
+    // Source: https://polygon.io/knowledge-base/article/does-polygon-offer-dark-pool-data
+    const isDarkpool = exchange === 4 && trfId !== undefined;
     
     if (!isDarkpool) {
       return false;
