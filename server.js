@@ -2,8 +2,9 @@ const express = require('express');
 const path = require('path');
 require('dotenv').config();
 
-const { initDatabase, getAllSentiments } = require('./database');
+const { initDatabase, getAllSentiments, getEODSnapshots } = require('./database');
 const PolygonWebSocketClient = require('./polygonWebSocket');
+const EODScheduler = require('./eodScheduler');
 const config = require('./config');
 
 const app = express();
@@ -11,6 +12,9 @@ const PORT = process.env.PORT || 3000;
 
 // Single WebSocket client instance
 let wsClient = null;
+
+// EOD Scheduler instance
+let eodScheduler = null;
 
 // Middleware
 app.use(express.json());
@@ -40,6 +44,18 @@ app.get('/api/holdings', (req, res) => {
   }
 });
 
+// API endpoint to get EOD snapshots
+app.get('/api/eod-snapshots', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 30;
+    const snapshots = await getEODSnapshots(limit);
+    res.json(snapshots);
+  } catch (error) {
+    console.error('Error fetching EOD snapshots:', error);
+    res.status(500).json({ error: 'Failed to fetch EOD snapshots' });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -64,6 +80,15 @@ async function startServer() {
       console.log('WebSocket client started');
     } else {
       console.log('WebSocket client already running');
+    }
+
+    // Start EOD Scheduler
+    if (!eodScheduler) {
+      eodScheduler = new EODScheduler();
+      eodScheduler.start();
+      console.log('EOD Scheduler started');
+    } else {
+      console.log('EOD Scheduler already running');
     }
 
     // Start Express server

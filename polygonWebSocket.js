@@ -15,7 +15,7 @@ class PolygonWebSocketClient {
     this.shouldBeConnected = false;
   }
 
-  // Check if market is open (9:30 AM - 4:00 PM ET, Monday-Friday)
+  // Check if market is open (9:30 AM - 4:30 PM ET, Monday-Friday)
   isMarketHours() {
     const now = new Date();
     
@@ -28,13 +28,13 @@ class PolygonWebSocketClient {
       return false; // Weekend
     }
     
-    // Check time (9:30 AM - 4:00 PM ET)
+    // Check time (9:30 AM - 4:30 PM ET)
     const hours = etTime.getHours();
     const minutes = etTime.getMinutes();
     const timeInMinutes = hours * 60 + minutes;
     
     const marketOpen = 9 * 60 + 30;  // 9:30 AM
-    const marketClose = 16 * 60;      // 4:00 PM
+    const marketClose = 16 * 60 + 30; // 4:30 PM
     
     return timeInMinutes >= marketOpen && timeInMinutes < marketClose;
   }

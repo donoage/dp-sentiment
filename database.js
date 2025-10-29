@@ -19,6 +19,18 @@ async function initDatabase() {
       )
     `);
     
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS eod_sentiment_snapshot (
+        id SERIAL PRIMARY KEY,
+        snapshot_date DATE NOT NULL,
+        total_bullish DECIMAL(20, 2) NOT NULL,
+        total_bearish DECIMAL(20, 2) NOT NULL,
+        net_sentiment DECIMAL(20, 2) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(snapshot_date)
+      )
+    `);
+    
     console.log('Database schema initialized');
   } catch (error) {
     console.error('Error initializing database:', error);
@@ -82,11 +94,86 @@ async function resetSentiments() {
   }
 }
 
+// Save EOD sentiment snapshot
+async function saveEODSnapshot() {
+  const client = await pool.connect();
+  try {
+    // Get current totals
+    const result = await client.query(`
+      SELECT 
+        COALESCE(SUM(bullish_amount), 0) as total_bullish,
+        COALESCE(SUM(bearish_amount), 0) as total_bearish
+      FROM ticker_sentiment
+    `);
+    
+    if (result.rows.length === 0) {
+      console.log('No sentiment data to snapshot');
+      return null;
+    }
+    
+    const totalBullish = parseFloat(result.rows[0].total_bullish);
+    const totalBearish = parseFloat(result.rows[0].total_bearish);
+    const netSentiment = totalBullish - totalBearish;
+    
+    // Get current date in ET timezone
+    const now = new Date();
+    const etDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    const snapshotDate = etDate.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    // Insert snapshot (or update if already exists for today)
+    await client.query(`
+      INSERT INTO eod_sentiment_snapshot (snapshot_date, total_bullish, total_bearish, net_sentiment)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (snapshot_date)
+      DO UPDATE SET
+        total_bullish = $2,
+        total_bearish = $3,
+        net_sentiment = $4,
+        created_at = CURRENT_TIMESTAMP
+    `, [snapshotDate, totalBullish, totalBearish, netSentiment]);
+    
+    console.log(`✅ EOD snapshot saved for ${snapshotDate}: Bullish=$${totalBullish.toFixed(2)}, Bearish=$${totalBearish.toFixed(2)}, Net=$${netSentiment.toFixed(2)}`);
+    
+    return {
+      snapshot_date: snapshotDate,
+      total_bullish: totalBullish,
+      total_bearish: totalBearish,
+      net_sentiment: netSentiment
+    };
+  } catch (error) {
+    console.error('Error saving EOD snapshot:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+// Get EOD snapshots (optional limit for recent history)
+async function getEODSnapshots(limit = 30) {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(`
+      SELECT snapshot_date, total_bullish, total_bearish, net_sentiment, created_at
+      FROM eod_sentiment_snapshot
+      ORDER BY snapshot_date DESC
+      LIMIT $1
+    `, [limit]);
+    return result.rows;
+  } catch (error) {
+    console.error('Error getting EOD snapshots:', error);
+    return [];
+  } finally {
+    client.release();
+  }
+}
+
 module.exports = {
   pool,
   initDatabase,
   updateSentiment,
   getAllSentiments,
-  resetSentiments
+  resetSentiments,
+  saveEODSnapshot,
+  getEODSnapshots
 };
 
