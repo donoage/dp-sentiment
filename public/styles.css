@@ -1,0 +1,344 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+header {
+  text-align: center;
+  color: white;
+  margin-bottom: 40px;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin-bottom: 10px;
+}
+
+.last-updated {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.summary-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.summary-card h3 {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.summary-card .amount {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.summary-card.bullish .amount {
+  color: #10b981;
+}
+
+.summary-card.bearish .amount {
+  color: #ef4444;
+}
+
+.summary-card.net .amount {
+  color: #3b82f6;
+}
+
+.tables-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.table-section {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.table-title {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.sentiment-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.sentiment-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.sentiment-table th {
+  padding: 14px 12px;
+  text-align: left;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.sentiment-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s;
+}
+
+.sentiment-table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+.sentiment-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.sentiment-table td {
+  padding: 14px 12px;
+}
+
+.ticker-cell {
+  font-size: 1.1rem;
+  color: #1f2937;
+}
+
+.sentiment-cell {
+  text-align: center;
+}
+
+.amount-cell {
+  text-align: right;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+.bullish-text {
+  color: #10b981;
+}
+
+.bearish-text {
+  color: #ef4444;
+}
+
+.net-text {
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-bullish {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-bearish {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-neutral {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.badge-waiting {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.inactive-row {
+  opacity: 0.5;
+}
+
+.inactive-row .ticker-cell {
+  color: #9ca3af;
+}
+
+.ticker-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ticker-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+}
+
+.ticker-card.inactive {
+  opacity: 0.6;
+  background: #f9fafb;
+}
+
+.ticker-card.inactive .ticker-symbol {
+  color: #9ca3af;
+}
+
+.ticker-card.inactive:hover {
+  transform: translateY(-2px);
+}
+
+.ticker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.ticker-symbol {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.sentiment-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.sentiment-badge.bullish {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.sentiment-badge.bearish {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.sentiment-badge.neutral {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.sentiment-amounts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sentiment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sentiment-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.sentiment-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.sentiment-value.bullish {
+  color: #10b981;
+}
+
+.sentiment-value.bearish {
+  color: #ef4444;
+}
+
+.sentiment-value.net {
+  color: #3b82f6;
+}
+
+.net-row {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+  
+  .tables-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .sentiment-table {
+    font-size: 0.85rem;
+  }
+  
+  .sentiment-table th,
+  .sentiment-table td {
+    padding: 10px 8px;
+  }
+  
+  .ticker-cell {
+    font-size: 1rem;
+  }
+  
+  .amount-cell {
+    font-size: 0.8rem;
+  }
+  
+  .badge {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
+}
+

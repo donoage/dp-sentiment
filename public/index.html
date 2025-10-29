@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dark Pool Sentiment Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Dark Pool Sentiment Tracker</h1>
+      <p class="subtitle">Real-time darkpool sentiment for SPY & QQQ top holdings</p>
+      <div class="last-updated">Last updated: <span id="lastUpdate">-</span></div>
+    </header>
+
+    <div class="summary-cards">
+      <div class="summary-card bullish">
+        <h3>Total Bullish</h3>
+        <div class="amount" id="totalBullish">$0</div>
+      </div>
+      <div class="summary-card bearish">
+        <h3>Total Bearish</h3>
+        <div class="amount" id="totalBearish">$0</div>
+      </div>
+      <div class="summary-card net">
+        <h3>Net Sentiment</h3>
+        <div class="amount" id="netSentiment">$0</div>
+      </div>
+    </div>
+
+    <div class="tables-container">
+      <div class="table-section">
+        <h2 class="table-title">📊 SPY Top 15 Holdings</h2>
+        <div class="table-wrapper">
+          <table class="sentiment-table" id="spyTable">
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Sentiment</th>
+                <th>Bullish</th>
+                <th>Bearish</th>
+                <th>Net</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- SPY tickers will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-section">
+        <h2 class="table-title">📈 QQQ Top 15 Holdings</h2>
+        <div class="table-wrapper">
+          <table class="sentiment-table" id="qqqTable">
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Sentiment</th>
+                <th>Bullish</th>
+                <th>Bearish</th>
+                <th>Net</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- QQQ tickers will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+

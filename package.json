@@ -1,0 +1,20 @@
+{
+  "name": "dp-sentiment",
+  "version": "1.0.0",
+  "description": "Dark pool sentiment tracker for SPY and QQQ top holdings",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["darkpool", "sentiment", "polygon", "websocket"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1"
+  }
+}
+
