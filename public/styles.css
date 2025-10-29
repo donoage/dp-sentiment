@@ -296,7 +296,6 @@ body.dark-mode .badge-waiting {
 
 .badge-strong {
   font-weight: 700;
-  animation: pulse-subtle 2s ease-in-out infinite;
 }
 
 .badge-strong-bullish {
@@ -311,8 +310,7 @@ body.dark-mode .badge-waiting {
 
 .badge-extreme {
   font-weight: 800;
-  animation: pulse-glow 1.5s ease-in-out infinite;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
 }
 
 .badge-extreme-bullish {
