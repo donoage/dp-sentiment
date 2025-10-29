@@ -239,32 +239,39 @@ function updateTable(tableId, holdings, sentimentMap, etfType) {
     let extremeBadge = '';
     
     if (hasActivity) {
-      // Check for extreme sentiment
+      // Check for extreme sentiment - use as primary badge
       if (Math.abs(net) >= minThreshold) {
         if (bullishPercent >= 85) {
-          extremeBadge = '<span class="badge badge-extreme badge-extreme-bullish">⚡ EXTREME BULLISH</span>';
+          sentimentBadge = '<span class="badge badge-extreme badge-extreme-bullish">⚡ EXTREME BULLISH</span>';
           rowClass += ' extreme-row extreme-bullish-row';
         } else if (bearishPercent >= 85) {
-          extremeBadge = '<span class="badge badge-extreme badge-extreme-bearish">⚡ EXTREME BEARISH</span>';
+          sentimentBadge = '<span class="badge badge-extreme badge-extreme-bearish">⚡ EXTREME BEARISH</span>';
           rowClass += ' extreme-row extreme-bearish-row';
         } else if (bullishPercent >= 70) {
-          extremeBadge = '<span class="badge badge-strong badge-strong-bullish">🔥 Strong Bullish</span>';
+          sentimentBadge = '<span class="badge badge-strong badge-strong-bullish">🔥 Strong Bullish</span>';
           rowClass += ' strong-row';
         } else if (bearishPercent >= 70) {
-          extremeBadge = '<span class="badge badge-strong badge-strong-bearish">❄️ Strong Bearish</span>';
+          sentimentBadge = '<span class="badge badge-strong badge-strong-bearish">❄️ Strong Bearish</span>';
           rowClass += ' strong-row';
+        } else {
+          // Regular sentiment
+          if (net > 0) {
+            sentimentBadge = '<span class="badge badge-bullish">🟢 Bullish</span>';
+          } else if (net < 0) {
+            sentimentBadge = '<span class="badge badge-bearish">🔴 Bearish</span>';
+          } else {
+            sentimentBadge = '<span class="badge badge-neutral">⚪ Neutral</span>';
+          }
         }
-      }
-      
-      if (net > 0) {
-        sentimentBadge = '<span class="badge badge-bullish">🟢 Bullish</span>';
-        sentimentText = 'Bullish';
-      } else if (net < 0) {
-        sentimentBadge = '<span class="badge badge-bearish">🔴 Bearish</span>';
-        sentimentText = 'Bearish';
       } else {
-        sentimentBadge = '<span class="badge badge-neutral">⚪ Neutral</span>';
-        sentimentText = 'Neutral';
+        // Regular sentiment (below threshold)
+        if (net > 0) {
+          sentimentBadge = '<span class="badge badge-bullish">🟢 Bullish</span>';
+        } else if (net < 0) {
+          sentimentBadge = '<span class="badge badge-bearish">🔴 Bearish</span>';
+        } else {
+          sentimentBadge = '<span class="badge badge-neutral">⚪ Neutral</span>';
+        }
       }
     } else {
       sentimentBadge = '<span class="badge badge-waiting">⏳ Waiting...</span>';
@@ -273,7 +280,7 @@ function updateTable(tableId, holdings, sentimentMap, etfType) {
     const row = document.createElement('tr');
     row.className = rowClass;
     row.innerHTML = `
-      <td class="ticker-cell"><strong>${ticker}</strong> ${extremeBadge}</td>
+      <td class="ticker-cell"><strong>${ticker}</strong></td>
       <td class="weight-cell">${weight.toFixed(2)}%</td>
       <td class="sentiment-cell">${sentimentBadge}</td>
       <td class="amount-cell bullish-text">${formatCurrency(bullishAmount)}</td>

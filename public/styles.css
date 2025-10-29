@@ -213,6 +213,8 @@ body.dark-mode .toggle-icon {
 .ticker-cell {
   font-size: 1.1rem;
   color: var(--text-primary);
+  width: 80px;
+  min-width: 60px;
 }
 
 .weight-cell {
