@@ -109,13 +109,11 @@ class IntradayChart {
             return timeInMinutes >= marketOpen && timeInMinutes <= marketClose;
           })
           .map(s => {
-            const utcTime = new Date(s.snapshot_time);
-            // Convert to ET for display
-            const etTimeStr = utcTime.toLocaleString('en-US', { timeZone: 'America/New_York' });
-            const etTime = new Date(etTimeStr);
+            // Parse the UTC time directly - the Date object will handle display correctly
+            const time = new Date(s.snapshot_time);
             
             return {
-              time: etTime,
+              time: time,
               bullish: parseFloat(s.total_bullish),
               bearish: parseFloat(s.total_bearish),
               net: parseFloat(s.net_sentiment)
@@ -138,13 +136,11 @@ class IntradayChart {
             return timeInMinutes >= marketOpen && timeInMinutes <= marketClose;
           })
           .map(s => {
-            const utcTime = new Date(s.snapshot_time);
-            // Convert to ET for display
-            const etTimeStr = utcTime.toLocaleString('en-US', { timeZone: 'America/New_York' });
-            const etTime = new Date(etTimeStr);
+            // Parse the UTC time directly - the Date object will handle display correctly
+            const time = new Date(s.snapshot_time);
             
             return {
-              time: etTime,
+              time: time,
               bullish: parseFloat(s.total_bullish),
               bearish: parseFloat(s.total_bearish),
               net: parseFloat(s.net_sentiment)
@@ -361,8 +357,14 @@ class IntradayChart {
 
   // Get x position based on time (9:30 AM to 4:00 PM ET)
   getXPosition(time, x, width) {
-    const hours = time.getHours();
-    const minutes = time.getMinutes();
+    // Convert UTC time to ET for positioning
+    const etTimeStr = time.toLocaleString('en-US', { 
+      timeZone: 'America/New_York',
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    const [hours, minutes] = etTimeStr.split(':').map(Number);
     const timeInMinutes = hours * 60 + minutes;
     
     // Market hours: 9:30 AM (570 minutes) to 4:00 PM (960 minutes)
