@@ -124,7 +124,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Dark mode styles */
@@ -201,4 +203,3 @@ body.dark-mode .chart-loading {
     width: 100%;
   }
 }
-

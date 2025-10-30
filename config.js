@@ -65,4 +65,3 @@ class DynamicConfig {
 
 // Export singleton instance
 module.exports = new DynamicConfig();
-

@@ -1,141 +1,163 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dark Pool Sentiment Tracker</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="chart.css">
-  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <div class="header-top">
-        <div class="title-with-logo">
-          <img src="logo.svg" alt="Dark Pool Logo" class="logo">
-          <h1>Dark Pool Sentiment Tracker</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dark Pool Sentiment Tracker</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="chart.css" />
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-top">
+          <div class="title-with-logo">
+            <img src="logo.svg" alt="Dark Pool Logo" class="logo" />
+            <h1>Dark Pool Sentiment Tracker</h1>
+          </div>
+          <button id="darkModeToggle" class="dark-mode-toggle" aria-label="Toggle dark mode">
+            <span class="toggle-icon">🌙</span>
+          </button>
         </div>
-        <button id="darkModeToggle" class="dark-mode-toggle" aria-label="Toggle dark mode">
-          <span class="toggle-icon">🌙</span>
-        </button>
-      </div>
-      <p class="subtitle">Real-time darkpool sentiment for SPY & QQQ top holdings</p>
-      <div class="last-updated">Last updated: <span id="lastUpdate">-</span></div>
-    </header>
+        <p class="subtitle">Real-time darkpool sentiment for SPY & QQQ top holdings</p>
+        <div class="last-updated">Last updated: <span id="lastUpdate">-</span></div>
+      </header>
 
-    <div class="top-section">
-      <div class="summary-cards">
-        <div class="summary-card bullish">
-          <h3>Total Bullish</h3>
-          <div class="amount" id="totalBullish">$0</div>
+      <div class="top-section">
+        <div class="summary-cards">
+          <div class="summary-card bullish">
+            <h3>Total Bullish</h3>
+            <div class="amount" id="totalBullish">$0</div>
+          </div>
+          <div class="summary-card bearish">
+            <h3>Total Bearish</h3>
+            <div class="amount" id="totalBearish">$0</div>
+          </div>
+          <div class="summary-card net">
+            <h3>Net Sentiment</h3>
+            <div class="amount" id="netSentiment">$0</div>
+            <div class="sentiment-badge-container" id="netSentimentBadge"></div>
+          </div>
         </div>
-        <div class="summary-card bearish">
-          <h3>Total Bearish</h3>
-          <div class="amount" id="totalBearish">$0</div>
+
+        <div class="chart-section">
+          <div class="chart-header">
+            <h2 class="chart-title">
+              <svg
+                class="chart-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M3 3v18h18" />
+                <path d="M7 16l4-4 4 4 6-6" />
+                <circle cx="7" cy="16" r="1.5" />
+                <circle cx="11" cy="12" r="1.5" />
+                <circle cx="15" cy="16" r="1.5" />
+                <circle cx="21" cy="10" r="1.5" />
+              </svg>
+              Intraday Sentiment Tracker
+            </h2>
+            <div class="chart-controls">
+              <input
+                type="date"
+                id="chartDatePicker"
+                class="chart-date-picker"
+                title="Select date"
+              />
+              <button id="chartRefreshBtn" class="chart-refresh-btn">
+                <span>↻</span>
+                Refresh
+              </button>
+            </div>
+          </div>
+          <div class="chart-info">
+            Sentiment snapshots captured every 2 minutes during market hours (9:30 AM - 4:00 PM ET)
+          </div>
+          <div id="chartContainer" class="chart-container">
+            <div class="chart-loading">
+              <div class="chart-loading-spinner"></div>
+              Loading chart data...
+            </div>
+          </div>
         </div>
-      <div class="summary-card net">
-        <h3>Net Sentiment</h3>
-        <div class="amount" id="netSentiment">$0</div>
-        <div class="sentiment-badge-container" id="netSentimentBadge"></div>
-      </div>
       </div>
 
-      <div class="chart-section">
-        <div class="chart-header">
-          <h2 class="chart-title">
-            <svg class="chart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 3v18h18"/>
-              <path d="M7 16l4-4 4 4 6-6"/>
-              <circle cx="7" cy="16" r="1.5"/>
-              <circle cx="11" cy="12" r="1.5"/>
-              <circle cx="15" cy="16" r="1.5"/>
-              <circle cx="21" cy="10" r="1.5"/>
+      <div class="tables-container">
+        <div class="table-section">
+          <h2 class="table-title">
+            <svg
+              class="table-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M3 3v18h18" />
+              <path d="M18 17V9" />
+              <path d="M13 17V5" />
+              <path d="M8 17v-3" />
             </svg>
-            Intraday Sentiment Tracker
+            SPY Top 20 Holdings
           </h2>
-          <div class="chart-controls">
-            <input type="date" id="chartDatePicker" class="chart-date-picker" title="Select date">
-            <button id="chartRefreshBtn" class="chart-refresh-btn">
-              <span>↻</span>
-              Refresh
-            </button>
+          <div class="table-wrapper">
+            <table class="sentiment-table" id="spyTable">
+              <thead>
+                <tr>
+                  <th>Ticker</th>
+                  <th>Weight</th>
+                  <th>Sentiment</th>
+                  <th>Bullish</th>
+                  <th>Bearish</th>
+                  <th>Net</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- SPY tickers will be inserted here -->
+              </tbody>
+            </table>
           </div>
         </div>
-        <div class="chart-info">
-          Sentiment snapshots captured every 2 minutes during market hours (9:30 AM - 4:00 PM ET)
-        </div>
-        <div id="chartContainer" class="chart-container">
-          <div class="chart-loading">
-            <div class="chart-loading-spinner"></div>
-            Loading chart data...
+
+        <div class="table-section">
+          <h2 class="table-title">
+            <svg
+              class="table-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+              <polyline points="16 7 22 7 22 13" />
+            </svg>
+            QQQ Top 20 Holdings
+          </h2>
+          <div class="table-wrapper">
+            <table class="sentiment-table" id="qqqTable">
+              <thead>
+                <tr>
+                  <th>Ticker</th>
+                  <th>Weight</th>
+                  <th>Sentiment</th>
+                  <th>Bullish</th>
+                  <th>Bearish</th>
+                  <th>Net</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- QQQ tickers will be inserted here -->
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="tables-container">
-      <div class="table-section">
-        <h2 class="table-title">
-          <svg class="table-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 3v18h18"/>
-            <path d="M18 17V9"/>
-            <path d="M13 17V5"/>
-            <path d="M8 17v-3"/>
-          </svg>
-          SPY Top 20 Holdings
-        </h2>
-        <div class="table-wrapper">
-          <table class="sentiment-table" id="spyTable">
-            <thead>
-              <tr>
-                <th>Ticker</th>
-                <th>Weight</th>
-                <th>Sentiment</th>
-                <th>Bullish</th>
-                <th>Bearish</th>
-                <th>Net</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- SPY tickers will be inserted here -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="table-section">
-        <h2 class="table-title">
-          <svg class="table-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-            <polyline points="16 7 22 7 22 13"/>
-          </svg>
-          QQQ Top 20 Holdings
-        </h2>
-        <div class="table-wrapper">
-          <table class="sentiment-table" id="qqqTable">
-            <thead>
-              <tr>
-                <th>Ticker</th>
-                <th>Weight</th>
-                <th>Sentiment</th>
-                <th>Bullish</th>
-                <th>Bearish</th>
-                <th>Net</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- QQQ tickers will be inserted here -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="chart.js?v=5"></script>
-  <script src="app.js?v=5"></script>
-</body>
+    <script src="chart.js?v=5"></script>
+    <script src="app.js?v=5"></script>
+  </body>
 </html>
-

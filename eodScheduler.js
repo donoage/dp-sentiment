@@ -11,17 +11,17 @@ class EODScheduler {
   shouldRunEODSnapshot() {
     const now = new Date();
     const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-    
+
     // Check if weekday (0 = Sunday, 6 = Saturday)
     const day = etTime.getDay();
     if (day === 0 || day === 6) {
       return false; // Weekend
     }
-    
+
     // Check if it's 8:00 PM ET
     const hours = etTime.getHours();
     const minutes = etTime.getMinutes();
-    
+
     // Run at 8:00 PM ET (20:00)
     if (hours === 20 && minutes === 0) {
       // Check if we've already run today
@@ -31,21 +31,21 @@ class EODScheduler {
       }
       return true;
     }
-    
+
     return false;
   }
 
   // Start the scheduler
   start() {
     console.log('📅 EOD Scheduler started - will snapshot at 8:00 PM ET on weekdays');
-    
+
     // Check every minute
     this.schedulerInterval = setInterval(async () => {
       if (this.shouldRunEODSnapshot()) {
         await this.runEODSnapshot();
       }
     }, 60000); // Check every minute
-    
+
     // Also check immediately on startup
     if (this.shouldRunEODSnapshot()) {
       this.runEODSnapshot();
@@ -57,13 +57,13 @@ class EODScheduler {
     try {
       console.log('🔔 Running EOD snapshot at 8:00 PM ET...');
       const snapshot = await saveEODSnapshot();
-      
+
       if (snapshot) {
         const now = new Date();
         const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
         this.lastRunDate = etTime.toISOString().split('T')[0];
         this.hasRunToday = true;
-        
+
         console.log('✅ EOD snapshot completed successfully');
       } else {
         console.log('⚠️ EOD snapshot had no data to save');
@@ -84,4 +84,3 @@ class EODScheduler {
 }
 
 module.exports = EODScheduler;
-

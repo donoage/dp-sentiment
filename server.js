@@ -3,7 +3,12 @@ const http = require('http');
 const path = require('path');
 require('dotenv').config();
 
-const { initDatabase, getAllSentiments, getEODSnapshots, getIntradaySnapshots } = require('./database');
+const {
+  initDatabase,
+  getAllSentiments,
+  getEODSnapshots,
+  getIntradaySnapshots,
+} = require('./database');
 const PolygonWebSocketClient = require('./polygonWebSocket');
 const EODScheduler = require('./eodScheduler');
 const IntradayScheduler = require('./intradayScheduler');
@@ -54,7 +59,7 @@ app.get('/api/holdings', (req, res) => {
   try {
     res.json({
       spy: config.SPY_TOP_20,
-      qqq: config.QQQ_TOP_20
+      qqq: config.QQQ_TOP_20,
     });
   } catch (error) {
     console.error('Error fetching holdings:', error);
@@ -80,12 +85,12 @@ app.get('/api/intraday-snapshots', async (req, res) => {
     const date = req.query.date; // Optional: YYYY-MM-DD format
     const limit = parseInt(req.query.limit) || 100;
     const snapshots = await getIntradaySnapshots(date, limit);
-    
+
     // Prevent caching of intraday data
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
-    
+
     res.json(snapshots);
   } catch (error) {
     console.error('Error fetching intraday snapshots:', error);
@@ -178,4 +183,3 @@ async function startServer() {
 }
 
 startServer();
-

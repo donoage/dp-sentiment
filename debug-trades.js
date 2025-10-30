@@ -25,11 +25,11 @@ class DebugWebSocketClient {
       this.authenticate();
     });
 
-    this.ws.on('message', (data) => {
+    this.ws.on('message', data => {
       this.handleMessage(data);
     });
 
-    this.ws.on('error', (error) => {
+    this.ws.on('error', error => {
       console.error('WebSocket error:', error);
     });
 
@@ -39,24 +39,30 @@ class DebugWebSocketClient {
   }
 
   authenticate() {
-    this.ws.send(JSON.stringify({
-      action: 'auth',
-      params: this.apiKey
-    }));
+    this.ws.send(
+      JSON.stringify({
+        action: 'auth',
+        params: this.apiKey,
+      })
+    );
   }
 
   subscribe() {
     // Subscribe to all tickers using * wildcard, then filter client-side
-    this.ws.send(JSON.stringify({
-      action: 'subscribe',
-      params: 'AM.*'
-    }));
+    this.ws.send(
+      JSON.stringify({
+        action: 'subscribe',
+        params: 'AM.*',
+      })
+    );
     console.log('✅ Subscribed to minute aggregates for all tickers');
 
-    this.ws.send(JSON.stringify({
-      action: 'subscribe',
-      params: 'T.*'
-    }));
+    this.ws.send(
+      JSON.stringify({
+        action: 'subscribe',
+        params: 'T.*',
+      })
+    );
     console.log('✅ Subscribed to trades for all tickers');
     console.log(`📊 Filtering for ${this.tickers.length} tickers: ${this.tickers.join(', ')}\n`);
   }
@@ -64,7 +70,7 @@ class DebugWebSocketClient {
   handleMessage(data) {
     try {
       const messages = JSON.parse(data);
-      
+
       if (!Array.isArray(messages)) {
         return;
       }
@@ -86,12 +92,12 @@ class DebugWebSocketClient {
 
   handleMinuteAggregate(msg) {
     const ticker = msg.sym;
-    
+
     // Only process tickers we're tracking
     if (!this.tickers.includes(ticker)) {
       return;
     }
-    
+
     const closePrice = msg.c;
     this.currentPrices[ticker] = closePrice;
     console.log(`📈 [${ticker}] Minute bar: $${closePrice}`);
@@ -99,39 +105,43 @@ class DebugWebSocketClient {
 
   handleTrade(msg) {
     const ticker = msg.sym;
-    
+
     // Only process tickers we're tracking
     if (!this.tickers.includes(ticker)) {
       return;
     }
-    
+
     const price = msg.p;
     const size = msg.s;
     const conditions = msg.c || [];
-    
+
     // Track stats
     if (!tradeStats[ticker]) {
       tradeStats[ticker] = { total: 0, darkpool: 0 };
     }
     tradeStats[ticker].total++;
     this.tradeCount++;
-    
+
     // Track all condition codes we see
     conditions.forEach(c => conditionCodes.add(c));
-    
+
     // Check darkpool conditions
     const darkpoolConditions = [12, 37, 38, 52, 53, 54, 55, 56];
     const isDarkpool = conditions.some(c => darkpoolConditions.includes(c));
-    
+
     if (isDarkpool) {
       tradeStats[ticker].darkpool++;
       this.darkpoolCount++;
       const tradeValue = price * size;
-      console.log(`🔴 [${ticker}] DARKPOOL: $${tradeValue.toFixed(2)} @ $${price} (size: ${size}) [conditions: ${conditions.join(',')}]`);
+      console.log(
+        `🔴 [${ticker}] DARKPOOL: $${tradeValue.toFixed(2)} @ $${price} (size: ${size}) [conditions: ${conditions.join(',')}]`
+      );
     } else {
       // Show regular trades too (first 5 per ticker)
       if (tradeStats[ticker].total <= 5) {
-        console.log(`⚪ [${ticker}] Regular trade: $${(price * size).toFixed(2)} @ $${price} (size: ${size}) [conditions: ${conditions.join(',')}]`);
+        console.log(
+          `⚪ [${ticker}] Regular trade: $${(price * size).toFixed(2)} @ $${price} (size: ${size}) [conditions: ${conditions.join(',')}]`
+        );
       }
     }
   }
@@ -143,11 +153,17 @@ class DebugWebSocketClient {
     console.log(`Total trades received: ${this.tradeCount}`);
     console.log(`Darkpool trades: ${this.darkpoolCount}`);
     console.log(`\nPer Ticker:`);
-    Object.keys(tradeStats).sort().forEach(ticker => {
-      const stats = tradeStats[ticker];
-      console.log(`  ${ticker}: ${stats.total} total, ${stats.darkpool} darkpool`);
-    });
-    console.log(`\nCondition codes seen: ${Array.from(conditionCodes).sort((a,b) => a-b).join(', ')}`);
+    Object.keys(tradeStats)
+      .sort()
+      .forEach(ticker => {
+        const stats = tradeStats[ticker];
+        console.log(`  ${ticker}: ${stats.total} total, ${stats.darkpool} darkpool`);
+      });
+    console.log(
+      `\nCondition codes seen: ${Array.from(conditionCodes)
+        .sort((a, b) => a - b)
+        .join(', ')}`
+    );
     console.log('='.repeat(70) + '\n');
   }
 
@@ -184,4 +200,3 @@ process.on('SIGINT', () => {
   client.disconnect();
   process.exit(0);
 });
-

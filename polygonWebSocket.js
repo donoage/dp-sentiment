@@ -19,24 +19,24 @@ class PolygonWebSocketClient {
   // Check if market is open (7:00 AM - 8:00 PM ET, Monday-Friday)
   isMarketHours() {
     const now = new Date();
-    
+
     // Convert to ET (UTC-5 or UTC-4 depending on DST)
     const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-    
+
     // Check if weekday (0 = Sunday, 6 = Saturday)
     const day = etTime.getDay();
     if (day === 0 || day === 6) {
       return false; // Weekend
     }
-    
+
     // Check time (7:00 AM - 8:00 PM ET)
     const hours = etTime.getHours();
     const minutes = etTime.getMinutes();
     const timeInMinutes = hours * 60 + minutes;
-    
-    const marketOpen = 7 * 60;       // 7:00 AM
-    const marketClose = 20 * 60;      // 8:00 PM
-    
+
+    const marketOpen = 7 * 60; // 7:00 AM
+    const marketClose = 20 * 60; // 8:00 PM
+
     return timeInMinutes >= marketOpen && timeInMinutes < marketClose;
   }
 
@@ -50,7 +50,10 @@ class PolygonWebSocketClient {
     }
 
     // Prevent multiple connections
-    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+    if (
+      this.ws &&
+      (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)
+    ) {
       console.log('WebSocket already connected or connecting');
       return;
     }
@@ -67,18 +70,18 @@ class PolygonWebSocketClient {
       this.scheduleMarketHoursCheck();
     });
 
-    this.ws.on('message', (data) => {
+    this.ws.on('message', data => {
       this.handleMessage(data);
     });
 
-    this.ws.on('error', (error) => {
+    this.ws.on('error', error => {
       console.error('WebSocket error:', error);
     });
 
     this.ws.on('close', () => {
       console.log('WebSocket closed.');
       this.ws = null; // Clear the reference
-      
+
       // Only reconnect if we should be connected (market hours)
       if (this.shouldBeConnected && this.isMarketHours()) {
         // Exponential backoff with jitter
@@ -89,7 +92,7 @@ class PolygonWebSocketClient {
         );
         const jitter = Math.random() * 1000; // Add up to 1 second jitter
         const delay = backoff + jitter;
-        
+
         console.log(`Reconnecting in ${(delay / 1000).toFixed(1)}s...`);
         setTimeout(() => this.connect(), delay);
       } else {
@@ -122,10 +125,12 @@ class PolygonWebSocketClient {
   }
 
   authenticate() {
-    this.ws.send(JSON.stringify({
-      action: 'auth',
-      params: this.apiKey
-    }));
+    this.ws.send(
+      JSON.stringify({
+        action: 'auth',
+        params: this.apiKey,
+      })
+    );
   }
 
   subscribe() {
@@ -133,17 +138,21 @@ class PolygonWebSocketClient {
     // Format: AM.TICKER for minute aggregates, T.TICKER for trades
     const amParams = this.tickers.map(t => `AM.${t}`).join(',');
     const tParams = this.tickers.map(t => `T.${t}`).join(',');
-    
-    this.ws.send(JSON.stringify({
-      action: 'subscribe',
-      params: amParams
-    }));
+
+    this.ws.send(
+      JSON.stringify({
+        action: 'subscribe',
+        params: amParams,
+      })
+    );
     console.log(`Subscribed to minute aggregates for ${this.tickers.length} tickers`);
 
-    this.ws.send(JSON.stringify({
-      action: 'subscribe',
-      params: tParams
-    }));
+    this.ws.send(
+      JSON.stringify({
+        action: 'subscribe',
+        params: tParams,
+      })
+    );
     console.log(`Subscribed to trades for ${this.tickers.length} tickers`);
     console.log(`Tracking: ${this.tickers.join(', ')}`);
   }
@@ -151,7 +160,7 @@ class PolygonWebSocketClient {
   handleMessage(data) {
     try {
       const messages = JSON.parse(data);
-      
+
       if (!Array.isArray(messages)) {
         return;
       }
@@ -175,29 +184,29 @@ class PolygonWebSocketClient {
 
   handleMinuteAggregate(msg) {
     const ticker = msg.sym;
-    
+
     // Only process tickers we're tracking
     if (!this.tickers.includes(ticker)) {
       return;
     }
-    
+
     const closePrice = msg.c;
     const volume = msg.v;
-    
+
     // Update current price for this ticker
     this.currentPrices[ticker] = closePrice;
-    
+
     console.log(`[${ticker}] Minute bar: $${closePrice} (vol: ${volume})`);
   }
 
   handleTrade(msg) {
     const ticker = msg.sym;
-    
+
     // Only process tickers we're tracking
     if (!this.tickers.includes(ticker)) {
       return false;
     }
-    
+
     // Only process trades during market hours
     if (!this.isMarketHours()) {
       return false;
@@ -207,14 +216,14 @@ class PolygonWebSocketClient {
     const size = msg.s;
     const exchange = msg.x;
     const trfId = msg.trfi; // TRF ID field (trfi per WebSocket API docs)
-    
+
     // Dark pool trades are identified by:
     // 1. exchange ID of 4 (exchange: 4)
     // 2. presence of a trfi field (Trade Reporting Facility ID)
     // Source: https://polygon.io/knowledge-base/article/does-polygon-offer-dark-pool-data
     // WebSocket field reference: https://polygon.io/docs/websocket/stocks/trades
     const isDarkpool = exchange === 4 && trfId !== undefined;
-    
+
     // Update current price with every lit exchange trade (non-darkpool)
     // This gives us real-time market price for comparison
     if (!isDarkpool) {
@@ -224,7 +233,7 @@ class PolygonWebSocketClient {
 
     // Get current market price (from most recent lit exchange trade)
     const currentPrice = this.currentPrices[ticker];
-    
+
     if (!currentPrice) {
       // No current price yet, skip
       return false;
@@ -232,33 +241,37 @@ class PolygonWebSocketClient {
 
     // Calculate trade value
     const tradeValue = price * size;
-    
+
     // Determine sentiment based on darkpool trade price vs current market price
     // Trade below current price = bullish (buyers willing to pay market price)
     // Trade above current price = bearish (sellers getting premium)
     let bullishAmount = 0;
     let bearishAmount = 0;
-    
+
     if (price < currentPrice) {
       bullishAmount = tradeValue;
-      console.log(`[${ticker}] 🟢 BULLISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (below $${currentPrice})`);
+      console.log(
+        `[${ticker}] 🟢 BULLISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (below $${currentPrice})`
+      );
     } else if (price > currentPrice) {
       bearishAmount = tradeValue;
-      console.log(`[${ticker}] 🔴 BEARISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (above $${currentPrice})`);
+      console.log(
+        `[${ticker}] 🔴 BEARISH darkpool: $${tradeValue.toFixed(2)} @ $${price} (above $${currentPrice})`
+      );
     }
-    
+
     // Update database
     if (bullishAmount > 0 || bearishAmount > 0) {
       updateSentiment(ticker, bullishAmount, bearishAmount);
-      
+
       // Broadcast update to connected clients in real-time
       if (this.broadcastServer) {
         this.broadcastServer.broadcastSentimentUpdate(ticker, bullishAmount, bearishAmount);
       }
-      
+
       return true;
     }
-    
+
     return false;
   }
 
@@ -267,7 +280,7 @@ class PolygonWebSocketClient {
       clearInterval(this.marketCheckInterval);
       this.marketCheckInterval = null;
     }
-    
+
     if (this.ws) {
       this.shouldBeConnected = false;
       this.ws.close();
@@ -276,4 +289,3 @@ class PolygonWebSocketClient {
 }
 
 module.exports = PolygonWebSocketClient;
-
