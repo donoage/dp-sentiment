@@ -82,6 +82,10 @@ class IntradayChart {
       
       console.log(`Fetched ${snapshots.length} snapshots`);
       
+      if (snapshots.length > 0) {
+        console.log('Sample snapshot:', snapshots[0]);
+      }
+      
       // If no date specified, filter to today's data (in ET timezone)
       if (!date) {
         const now = new Date();
