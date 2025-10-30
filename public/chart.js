@@ -88,40 +88,24 @@ class IntradayChart {
       
       // If no date specified, filter to today's data (in ET timezone)
       if (!date) {
-        const now = new Date();
-        // Get today's date in ET timezone properly
-        const todayET = now.toLocaleDateString('en-US', { 
-          timeZone: 'America/New_York',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit'
-        });
-        const [month, day, year] = todayET.split('/');
-        const today = `${year}-${month}-${day}`;
+        // Use Luxon for reliable timezone handling
+        const { DateTime } = luxon;
+        const today = DateTime.now().setZone('America/New_York').toFormat('yyyy-MM-dd');
         
-        console.log(`Filtering for today: ${today}`);
+        console.log(`Filtering for today (ET): ${today}`);
         
         this.data = snapshots
           .filter(s => {
-            const snapshotDate = new Date(s.snapshot_time);
-            
-            // Get ET date string for date comparison
-            const etDateStr = snapshotDate.toLocaleDateString('en-US', { 
-              timeZone: 'America/New_York',
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit'
-            });
-            const [month, day, year] = etDateStr.split('/');
-            const snapshotDateStr = `${year}-${month}-${day}`;
+            const { DateTime } = luxon;
+            const snapshotDT = DateTime.fromISO(s.snapshot_time, { zone: 'utc' }).setZone('America/New_York');
+            const snapshotDateStr = snapshotDT.toFormat('yyyy-MM-dd');
             
             // Check if it's today
             if (snapshotDateStr !== today) return false;
             
             // Get UTC hours - market hours in UTC are 13:30-20:00 (EDT) or 14:30-21:00 (EST)
-            const utcHours = snapshotDate.getUTCHours();
-            const utcMinutes = snapshotDate.getUTCMinutes();
-            const utcTimeInMinutes = utcHours * 60 + utcMinutes;
+            const utcDT = DateTime.fromISO(s.snapshot_time, { zone: 'utc' });
+            const utcTimeInMinutes = utcDT.hour * 60 + utcDT.minute;
             
             // Market hours in UTC (EDT: UTC-4)
             // 9:30 AM ET = 13:30 UTC, 4:00 PM ET = 20:00 UTC
@@ -145,12 +129,11 @@ class IntradayChart {
       } else {
         this.data = snapshots
           .filter(s => {
-            const snapshotDate = new Date(s.snapshot_time);
+            const { DateTime } = luxon;
             
             // Get UTC hours - market hours in UTC are 13:30-20:00 (EDT) or 14:30-21:00 (EST)
-            const utcHours = snapshotDate.getUTCHours();
-            const utcMinutes = snapshotDate.getUTCMinutes();
-            const utcTimeInMinutes = utcHours * 60 + utcMinutes;
+            const utcDT = DateTime.fromISO(s.snapshot_time, { zone: 'utc' });
+            const utcTimeInMinutes = utcDT.hour * 60 + utcDT.minute;
             
             // Market hours in UTC (EDT: UTC-4)
             // 9:30 AM ET = 13:30 UTC, 4:00 PM ET = 20:00 UTC
