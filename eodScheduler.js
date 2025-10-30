@@ -7,7 +7,7 @@ class EODScheduler {
     this.lastRunDate = null;
   }
 
-  // Check if it's time to run EOD snapshot (5:00 PM ET on weekdays)
+  // Check if it's time to run EOD snapshot (8:00 PM ET on weekdays)
   shouldRunEODSnapshot() {
     const now = new Date();
     const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
@@ -18,12 +18,12 @@ class EODScheduler {
       return false; // Weekend
     }
     
-    // Check if it's 5:00 PM ET
+    // Check if it's 8:00 PM ET
     const hours = etTime.getHours();
     const minutes = etTime.getMinutes();
     
-    // Run at 5:00 PM ET (17:00)
-    if (hours === 17 && minutes === 0) {
+    // Run at 8:00 PM ET (20:00)
+    if (hours === 20 && minutes === 0) {
       // Check if we've already run today
       const currentDate = etTime.toISOString().split('T')[0];
       if (this.lastRunDate === currentDate) {
@@ -37,7 +37,7 @@ class EODScheduler {
 
   // Start the scheduler
   start() {
-    console.log('📅 EOD Scheduler started - will snapshot at 5:00 PM ET on weekdays');
+    console.log('📅 EOD Scheduler started - will snapshot at 8:00 PM ET on weekdays');
     
     // Check every minute
     this.schedulerInterval = setInterval(async () => {
@@ -55,7 +55,7 @@ class EODScheduler {
   // Run the EOD snapshot
   async runEODSnapshot() {
     try {
-      console.log('🔔 Running EOD snapshot at 5:00 PM ET...');
+      console.log('🔔 Running EOD snapshot at 8:00 PM ET...');
       const snapshot = await saveEODSnapshot();
       
       if (snapshot) {

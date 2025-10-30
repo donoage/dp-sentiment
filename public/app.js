@@ -158,8 +158,18 @@ function formatCurrency(amount) {
 }
 
 function updateDashboard(sentiments) {
-  // Update last updated time
-  document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+  // Update last updated time (only during market hours: 7:00 AM - 8:00 PM ET)
+  const now = new Date();
+  const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const hours = etTime.getHours();
+  const minutes = etTime.getMinutes();
+  const timeInMinutes = hours * 60 + minutes;
+  const marketOpen = 7 * 60;       // 7:00 AM
+  const marketClose = 20 * 60;      // 8:00 PM
+  
+  if (timeInMinutes >= marketOpen && timeInMinutes < marketClose) {
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+  }
   
   // Create a map of sentiment data
   const sentimentMap = {};
