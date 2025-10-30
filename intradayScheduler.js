@@ -70,6 +70,8 @@ class IntradayScheduler {
         // Broadcast to connected clients that a new snapshot is available
         if (this.broadcastServer) {
           this.broadcastServer.broadcastIntradaySnapshot();
+        } else {
+          console.log('⚠️ No broadcast server available - skipping WebSocket notification');
         }
       }
     } catch (error) {
