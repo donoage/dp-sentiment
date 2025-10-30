@@ -204,6 +204,34 @@ function updateDashboard(sentiments) {
   const netElement = document.getElementById('netSentiment');
   netElement.style.color = netSentiment > 0 ? '#10b981' : netSentiment < 0 ? '#ef4444' : '#3b82f6';
   
+  // Update net sentiment badge
+  const netBadgeElement = document.getElementById('netSentimentBadge');
+  const netAbsValue = Math.abs(netSentiment);
+  let netBadge = '';
+  
+  // Determine badge based on net sentiment magnitude
+  if (netAbsValue > 50000000) { // > $50M
+    if (netSentiment > 0) {
+      netBadge = '<span class="badge badge-extreme badge-extreme-bullish">🟢 EXTREME BULLISH</span>';
+    } else {
+      netBadge = '<span class="badge badge-extreme badge-extreme-bearish">🔴 EXTREME BEARISH</span>';
+    }
+  } else if (netAbsValue > 20000000) { // > $20M
+    if (netSentiment > 0) {
+      netBadge = '<span class="badge badge-strong badge-strong-bullish">🟢 STRONG BULLISH</span>';
+    } else {
+      netBadge = '<span class="badge badge-strong badge-strong-bearish">🔴 STRONG BEARISH</span>';
+    }
+  } else if (netSentiment > 0) {
+    netBadge = '<span class="badge badge-bullish">🟢 Bullish</span>';
+  } else if (netSentiment < 0) {
+    netBadge = '<span class="badge badge-bearish">🔴 Bearish</span>';
+  } else {
+    netBadge = '<span class="badge badge-neutral">⚪ Neutral</span>';
+  }
+  
+  netBadgeElement.innerHTML = netBadge;
+  
   // Update SPY table
   updateTable('spyTable', SPY_HOLDINGS, sentimentMap, 'spy');
   
