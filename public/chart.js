@@ -258,7 +258,7 @@ class IntradayChart {
     this.ctx.textAlign = 'center';
     this.ctx.textBaseline = 'middle';
     this.ctx.fillText('No intraday data available yet', width / 2, height / 2);
-    this.ctx.fillText('Data is captured every 5 minutes during market hours', width / 2, height / 2 + 25);
+    this.ctx.fillText('Data is captured every 2 minutes during market hours', width / 2, height / 2 + 25);
   }
 
   // Get color scheme based on dark mode

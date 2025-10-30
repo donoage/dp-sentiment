@@ -395,7 +395,7 @@ function initIntradayChart() {
   intradayChart.fetchData();
 }
 
-// Auto-refresh chart every 5 minutes during market hours
+// Auto-refresh chart every 2 minutes during market hours
 function startChartAutoRefresh() {
   setInterval(() => {
     const now = new Date();
@@ -419,7 +419,7 @@ function startChartAutoRefresh() {
         }
       }
     }
-  }, 5 * 60 * 1000); // 5 minutes
+  }, 2 * 60 * 1000); // 2 minutes
 }
 
 // Initialize on page load
