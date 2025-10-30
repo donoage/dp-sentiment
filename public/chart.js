@@ -225,6 +225,9 @@ class IntradayChart {
     this.ctx.textBaseline = 'middle';
     this.ctx.fillText('$0 (Neutral)', chartX + 5, zeroY - 10);
     
+    // Draw market open/close lines
+    this.drawMarketHoursLines(chartX, chartY, chartWidth, chartHeight, colors);
+    
     // Draw net sentiment line with dynamic coloring (green above 0, red below 0)
     this.drawDynamicLine(chartX, chartY, chartWidth, chartHeight, yMin, yMax, colors);
     
@@ -268,6 +271,7 @@ class IntradayChart {
         textSecondary: '#9ca3af',
         grid: '#374151',
         zeroLine: '#6b7280',
+        marketHours: '#f59e0b',
         bullish: '#10b981',
         bearish: '#ef4444',
         net: '#3b82f6',
@@ -281,6 +285,7 @@ class IntradayChart {
         textSecondary: '#6b7280',
         grid: '#e5e7eb',
         zeroLine: '#9ca3af',
+        marketHours: '#f59e0b',
         bullish: '#10b981',
         bearish: '#ef4444',
         net: '#3b82f6',
@@ -358,6 +363,51 @@ class IntradayChart {
     this.ctx.textBaseline = 'middle';
     this.ctx.fillText('Net Sentiment ($)', 0, 0);
     this.ctx.restore();
+  }
+
+  // Draw market open and close lines
+  drawMarketHoursLines(x, y, width, height, colors) {
+    // Market open: 9:30 AM ET
+    const marketOpenMinutes = 9 * 60 + 30; // 570 minutes
+    const dataStart = 7 * 60;              // 420 minutes
+    const dataDuration = 13 * 60;          // 780 minutes (7 AM to 8 PM)
+    
+    const marketOpenRatio = (marketOpenMinutes - dataStart) / dataDuration;
+    const marketOpenX = x + marketOpenRatio * width;
+    
+    // Market close: 4:00 PM ET
+    const marketCloseMinutes = 16 * 60;    // 960 minutes
+    const marketCloseRatio = (marketCloseMinutes - dataStart) / dataDuration;
+    const marketCloseX = x + marketCloseRatio * width;
+    
+    // Draw market open line
+    this.ctx.strokeStyle = colors.marketHours;
+    this.ctx.lineWidth = 2;
+    this.ctx.setLineDash([8, 4]);
+    this.ctx.beginPath();
+    this.ctx.moveTo(marketOpenX, y);
+    this.ctx.lineTo(marketOpenX, y + height);
+    this.ctx.stroke();
+    this.ctx.setLineDash([]);
+    
+    // Draw market close line
+    this.ctx.setLineDash([8, 4]);
+    this.ctx.beginPath();
+    this.ctx.moveTo(marketCloseX, y);
+    this.ctx.lineTo(marketCloseX, y + height);
+    this.ctx.stroke();
+    this.ctx.setLineDash([]);
+    
+    // Labels
+    this.ctx.fillStyle = colors.marketHours;
+    this.ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'top';
+    this.ctx.fillText('Market Open', marketOpenX, y + 5);
+    this.ctx.fillText('9:30 AM', marketOpenX, y + 18);
+    
+    this.ctx.fillText('Market Close', marketCloseX, y + 5);
+    this.ctx.fillText('4:00 PM', marketCloseX, y + 18);
   }
 
   // Get x position based on time (7:00 AM to 8:00 PM ET)
