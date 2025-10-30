@@ -185,7 +185,7 @@ async function getEODSnapshots(limit = 30) {
   }
 }
 
-// Save intraday sentiment snapshot (every 15 minutes)
+// Save intraday sentiment snapshot (every 5 minutes)
 async function saveIntradaySnapshot() {
   const client = await pool.connect();
   try {
@@ -210,9 +210,9 @@ async function saveIntradaySnapshot() {
     const now = new Date();
     const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
     
-    // Round to nearest 15 minutes
+    // Round to nearest 5 minutes
     const minutes = etTime.getMinutes();
-    const roundedMinutes = Math.floor(minutes / 15) * 15;
+    const roundedMinutes = Math.floor(minutes / 5) * 5;
     etTime.setMinutes(roundedMinutes, 0, 0); // Set seconds and ms to 0
     
     const snapshotTime = etTime.toISOString();

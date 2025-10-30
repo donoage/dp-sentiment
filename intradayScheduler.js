@@ -27,7 +27,7 @@ class IntradayScheduler {
     return timeInMinutes >= marketOpen && timeInMinutes < marketClose;
   }
 
-  // Check if we should save snapshot (every 15 minutes: :00, :15, :30, :45)
+  // Check if we should save snapshot (every 5 minutes: :00, :05, :10, :15, :20, :25, :30, :35, :40, :45, :50, :55)
   shouldSaveSnapshot() {
     if (!this.isMarketHours()) {
       return false;
@@ -37,13 +37,13 @@ class IntradayScheduler {
     const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
     const minutes = etTime.getMinutes();
     
-    // Trigger on exact 15-minute intervals
-    return minutes % 15 === 0;
+    // Trigger on exact 5-minute intervals
+    return minutes % 5 === 0;
   }
 
   // Start the scheduler
   start() {
-    console.log('📊 Intraday Snapshot Scheduler started - snapshots every 15 min during market hours');
+    console.log('📊 Intraday Snapshot Scheduler started - snapshots every 5 min during market hours');
     
     // Check every minute
     this.schedulerInterval = setInterval(async () => {
@@ -52,7 +52,7 @@ class IntradayScheduler {
       }
     }, 60000); // Check every minute
     
-    // Also check immediately on startup if it's a 15-minute mark
+    // Also check immediately on startup if it's a 5-minute mark
     if (this.shouldSaveSnapshot()) {
       this.saveSnapshot();
     }

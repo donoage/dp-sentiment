@@ -12,6 +12,9 @@ let useFallback = false;
 // Sentiment data cache (for incremental updates)
 let sentimentCache = {};
 
+// Intraday chart instance
+let intradayChart = null;
+
 // Fetch holdings configuration
 async function fetchHoldings() {
   try {
@@ -320,7 +323,75 @@ function initDarkMode() {
     const isNowDark = document.body.classList.contains('dark-mode');
     toggleIcon.textContent = isNowDark ? '☀️' : '🌙';
     localStorage.setItem('darkMode', isNowDark);
+    
+    // Redraw chart with new theme
+    if (intradayChart) {
+      intradayChart.draw();
+    }
   });
+}
+
+// Initialize intraday chart
+function initIntradayChart() {
+  if (!window.IntradayChart) {
+    console.error('IntradayChart class not loaded');
+    return;
+  }
+  
+  intradayChart = new window.IntradayChart('chartContainer');
+  intradayChart.init();
+  
+  // Set up date picker
+  const datePicker = document.getElementById('chartDatePicker');
+  const today = new Date();
+  datePicker.valueAsDate = today;
+  datePicker.max = today.toISOString().split('T')[0];
+  
+  datePicker.addEventListener('change', async () => {
+    const selectedDate = datePicker.value;
+    if (selectedDate) {
+      await intradayChart.fetchData(selectedDate);
+    }
+  });
+  
+  // Set up refresh button
+  const refreshBtn = document.getElementById('chartRefreshBtn');
+  refreshBtn.addEventListener('click', async () => {
+    refreshBtn.disabled = true;
+    const selectedDate = datePicker.value;
+    await intradayChart.fetchData(selectedDate || null);
+    refreshBtn.disabled = false;
+  });
+  
+  // Load initial data (today)
+  intradayChart.fetchData();
+}
+
+// Auto-refresh chart every 5 minutes during market hours
+function startChartAutoRefresh() {
+  setInterval(() => {
+    const now = new Date();
+    const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    const hours = etTime.getHours();
+    const minutes = etTime.getMinutes();
+    const timeInMinutes = hours * 60 + minutes;
+    const marketOpen = 9 * 60 + 30;  // 9:30 AM
+    const marketClose = 16 * 60;      // 4:00 PM
+    
+    // Only auto-refresh during market hours
+    if (timeInMinutes >= marketOpen && timeInMinutes < marketClose) {
+      if (intradayChart) {
+        const datePicker = document.getElementById('chartDatePicker');
+        const selectedDate = datePicker.value;
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Only auto-refresh if viewing today
+        if (!selectedDate || selectedDate === today) {
+          intradayChart.fetchData();
+        }
+      }
+    }
+  }, 5 * 60 * 1000); // 5 minutes
 }
 
 // Initialize on page load
@@ -330,6 +401,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     initDarkMode();
     
     await fetchHoldings(); // Fetch holdings first
+    
+    // Initialize intraday chart
+    initIntradayChart();
+    
+    // Start chart auto-refresh
+    startChartAutoRefresh();
     
     // Connect via WebSocket for real-time updates
     // WebSocket will send initial data on connection
