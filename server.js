@@ -158,7 +158,7 @@ async function startServer() {
 
     // Start Intraday Scheduler
     if (!intradayScheduler) {
-      intradayScheduler = new IntradayScheduler();
+      intradayScheduler = new IntradayScheduler(broadcastServer);
       intradayScheduler.start();
       console.log('Intraday Scheduler started');
     } else {

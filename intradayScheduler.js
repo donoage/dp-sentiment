@@ -1,8 +1,9 @@
 const { saveIntradaySnapshot } = require('./database');
 
 class IntradayScheduler {
-  constructor() {
+  constructor(broadcastServer = null) {
     this.schedulerInterval = null;
+    this.broadcastServer = broadcastServer;
   }
 
   // Check if market is open (7:00 AM - 8:00 PM ET, Monday-Friday)
@@ -65,6 +66,11 @@ class IntradayScheduler {
       
       if (snapshot) {
         console.log('✅ Intraday snapshot saved');
+        
+        // Broadcast to connected clients that a new snapshot is available
+        if (this.broadcastServer) {
+          this.broadcastServer.broadcastIntradaySnapshot();
+        }
       }
     } catch (error) {
       console.error('❌ Error saving intraday snapshot:', error);

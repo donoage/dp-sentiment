@@ -157,6 +157,28 @@ class BroadcastServer {
     return this.wss.clients.size;
   }
 
+  // Broadcast intraday snapshot notification to all connected clients
+  broadcastIntradaySnapshot() {
+    if (this.wss.clients.size === 0) {
+      return;
+    }
+
+    const message = JSON.stringify({
+      type: 'intraday_snapshot',
+      timestamp: new Date().toISOString()
+    });
+
+    let broadcastCount = 0;
+    this.wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+        broadcastCount++;
+      }
+    });
+
+    console.log(`📊 Broadcasted intraday snapshot notification to ${broadcastCount} clients`);
+  }
+
   // Periodically sync all clients with database (every 5 minutes)
   startPeriodicSync() {
     console.log('🔄 Starting periodic full sync (every 5 minutes)');

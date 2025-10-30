@@ -107,6 +107,20 @@ function connectWebSocket() {
           last_updated: sentimentCache[ticker].last_updated
         }));
         updateDashboard(sentiments);
+      } else if (message.type === 'intraday_snapshot') {
+        // New intraday snapshot saved - refresh chart if viewing today
+        console.log('📊 New intraday snapshot available');
+        if (intradayChart) {
+          const datePicker = document.getElementById('chartDatePicker');
+          const selectedDate = datePicker.value;
+          const today = new Date().toISOString().split('T')[0];
+          
+          // Only auto-refresh if viewing today
+          if (!selectedDate || selectedDate === today) {
+            console.log('🔄 Refreshing intraday chart...');
+            intradayChart.fetchData();
+          }
+        }
       }
     } catch (error) {
       console.error('Error parsing WebSocket message:', error);
