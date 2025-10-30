@@ -109,17 +109,23 @@ function connectWebSocket() {
         updateDashboard(sentiments);
       } else if (message.type === 'intraday_snapshot') {
         // New intraday snapshot saved - refresh chart if viewing today
-        console.log('📊 New intraday snapshot available');
+        console.log('📊 New intraday snapshot available', message.timestamp);
         if (intradayChart) {
           const datePicker = document.getElementById('chartDatePicker');
-          const selectedDate = datePicker.value;
+          const selectedDate = datePicker ? datePicker.value : null;
           const today = new Date().toISOString().split('T')[0];
+          
+          console.log('📅 Selected date:', selectedDate, 'Today:', today);
           
           // Only auto-refresh if viewing today
           if (!selectedDate || selectedDate === today) {
             console.log('🔄 Refreshing intraday chart...');
             intradayChart.fetchData();
+          } else {
+            console.log('⏸️ Not refreshing - viewing historical date:', selectedDate);
           }
+        } else {
+          console.log('⚠️ intradayChart not initialized yet');
         }
       }
     } catch (error) {
@@ -386,8 +392,9 @@ function initIntradayChart() {
   // Set up date picker
   const datePicker = document.getElementById('chartDatePicker');
   const today = new Date();
-  datePicker.valueAsDate = today;
-  datePicker.max = today.toISOString().split('T')[0];
+  const todayStr = today.toISOString().split('T')[0];
+  datePicker.value = todayStr;
+  datePicker.max = todayStr;
   
   datePicker.addEventListener('change', async () => {
     const selectedDate = datePicker.value;
