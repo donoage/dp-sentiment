@@ -107,19 +107,17 @@ class IntradayChart {
             // Check if it's today
             if (snapshotDateStr !== today) return false;
             
-            // Get ET time for market hours check
-            const etTimeStr = snapshotDate.toLocaleString('en-US', { 
-              timeZone: 'America/New_York',
-              hour12: false,
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-            const [hours, minutes] = etTimeStr.split(':').map(Number);
-            const timeInMinutes = hours * 60 + minutes;
-            const marketOpen = 9 * 60 + 30; // 9:30 AM
-            const marketClose = 16 * 60;     // 4:00 PM
+            // Get UTC hours - market hours in UTC are 13:30-20:00 (EDT) or 14:30-21:00 (EST)
+            const utcHours = snapshotDate.getUTCHours();
+            const utcMinutes = snapshotDate.getUTCMinutes();
+            const utcTimeInMinutes = utcHours * 60 + utcMinutes;
             
-            return timeInMinutes >= marketOpen && timeInMinutes <= marketClose;
+            // Market hours in UTC (EDT: UTC-4)
+            // 9:30 AM ET = 13:30 UTC, 4:00 PM ET = 20:00 UTC
+            const marketOpenUTC = 13 * 60 + 30; // 13:30 UTC
+            const marketCloseUTC = 20 * 60;      // 20:00 UTC
+            
+            return utcTimeInMinutes >= marketOpenUTC && utcTimeInMinutes <= marketCloseUTC;
           })
           .map(s => {
             // Parse the UTC time directly - the Date object will handle display correctly
@@ -138,19 +136,17 @@ class IntradayChart {
           .filter(s => {
             const snapshotDate = new Date(s.snapshot_time);
             
-            // Get ET time for market hours check
-            const etTimeStr = snapshotDate.toLocaleString('en-US', { 
-              timeZone: 'America/New_York',
-              hour12: false,
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-            const [hours, minutes] = etTimeStr.split(':').map(Number);
-            const timeInMinutes = hours * 60 + minutes;
-            const marketOpen = 9 * 60 + 30; // 9:30 AM
-            const marketClose = 16 * 60;     // 4:00 PM
+            // Get UTC hours - market hours in UTC are 13:30-20:00 (EDT) or 14:30-21:00 (EST)
+            const utcHours = snapshotDate.getUTCHours();
+            const utcMinutes = snapshotDate.getUTCMinutes();
+            const utcTimeInMinutes = utcHours * 60 + utcMinutes;
             
-            return timeInMinutes >= marketOpen && timeInMinutes <= marketClose;
+            // Market hours in UTC (EDT: UTC-4)
+            // 9:30 AM ET = 13:30 UTC, 4:00 PM ET = 20:00 UTC
+            const marketOpenUTC = 13 * 60 + 30; // 13:30 UTC
+            const marketCloseUTC = 20 * 60;      // 20:00 UTC
+            
+            return utcTimeInMinutes >= marketOpenUTC && utcTimeInMinutes <= marketCloseUTC;
           })
           .map(s => {
             // Parse the UTC time directly - the Date object will handle display correctly
