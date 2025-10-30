@@ -242,8 +242,9 @@ class PolygonWebSocketClient {
     // Calculate trade value
     const tradeValue = price * size;
 
-    // Filter out small trades - only consider orders >= $100K
-    const minOrderAmount = 100000;
+    // Filter out small trades - only consider orders >= $250K
+    // This filters out retail orders and focuses on institutional block trades
+    const minOrderAmount = 250000;
     if (tradeValue < minOrderAmount) {
       return false;
     }
