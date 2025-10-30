@@ -188,6 +188,21 @@ body.dark-mode .toggle-icon {
   color: var(--text-primary);
   margin-bottom: 20px;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.table-icon {
+  width: 28px;
+  height: 28px;
+  color: #3b82f6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body.dark-mode .table-icon {
+  color: #60a5fa;
 }
 
 .table-wrapper {
