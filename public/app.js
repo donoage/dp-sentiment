@@ -232,8 +232,9 @@ function updateDashboard(sentiments) {
   let netBadge = '';
 
   // Determine badge based on net sentiment magnitude
-  if (netAbsValue > 50000000) {
-    // > $50M
+  // Using higher thresholds for overall market sentiment (sum of all tickers)
+  if (netAbsValue > 100000000) {
+    // > $100M - extreme overall market sentiment
     if (netSentiment > 0) {
       netBadge =
         '<span class="badge badge-extreme badge-extreme-bullish">🟢 EXTREME BULLISH</span>';
@@ -241,8 +242,8 @@ function updateDashboard(sentiments) {
       netBadge =
         '<span class="badge badge-extreme badge-extreme-bearish">🔴 EXTREME BEARISH</span>';
     }
-  } else if (netAbsValue > 20000000) {
-    // > $20M
+  } else if (netAbsValue > 50000000) {
+    // > $50M - strong overall market sentiment
     if (netSentiment > 0) {
       netBadge = '<span class="badge badge-strong badge-strong-bullish">🟢 STRONG BULLISH</span>';
     } else {
