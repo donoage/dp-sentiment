@@ -206,16 +206,13 @@ async function saveIntradaySnapshot() {
     const totalBearish = parseFloat(result.rows[0].total_bearish);
     const netSentiment = totalBullish - totalBearish;
     
-    // Get current time in ET timezone
+    // Get current time in UTC and round to nearest 5 minutes
     const now = new Date();
-    const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-    
-    // Round to nearest 5 minutes
-    const minutes = etTime.getMinutes();
+    const minutes = now.getUTCMinutes();
     const roundedMinutes = Math.floor(minutes / 5) * 5;
-    etTime.setMinutes(roundedMinutes, 0, 0); // Set seconds and ms to 0
+    now.setUTCMinutes(roundedMinutes, 0, 0); // Set seconds and ms to 0
     
-    const snapshotTime = etTime.toISOString();
+    const snapshotTime = now.toISOString();
     
     // Insert snapshot (or update if already exists for this time)
     await client.query(`
@@ -229,7 +226,8 @@ async function saveIntradaySnapshot() {
         created_at = CURRENT_TIMESTAMP
     `, [snapshotTime, totalBullish, totalBearish, netSentiment]);
     
-    console.log(`💾 Intraday snapshot saved: ${etTime.toLocaleTimeString('en-US', { timeZone: 'America/New_York' })} - Bullish=$${totalBullish.toFixed(2)}, Bearish=$${totalBearish.toFixed(2)}, Net=$${netSentiment.toFixed(2)}`);
+    const etTimeStr = now.toLocaleTimeString('en-US', { timeZone: 'America/New_York' });
+    console.log(`💾 Intraday snapshot saved: ${etTimeStr} ET - Bullish=$${totalBullish.toFixed(2)}, Bearish=$${totalBearish.toFixed(2)}, Net=$${netSentiment.toFixed(2)}`);
     
     return {
       snapshot_time: snapshotTime,
