@@ -103,6 +103,12 @@ async function startServer() {
     await config.initialize();
     console.log('ETF holdings initialized');
 
+    // Start broadcast WebSocket server for clients (must be before schedulers that use it)
+    if (!broadcastServer) {
+      broadcastServer = new BroadcastServer(server);
+      console.log('Broadcast WebSocket server started');
+    }
+
     // Start Holdings Scheduler (refreshes daily at 6:30 AM ET)
     if (!holdingsScheduler) {
       holdingsScheduler = new HoldingsScheduler();
@@ -114,17 +120,11 @@ async function startServer() {
 
     // Start Reset Scheduler (resets sentiments daily at 6:45 AM ET)
     if (!resetScheduler) {
-      resetScheduler = new ResetScheduler();
+      resetScheduler = new ResetScheduler(broadcastServer);
       resetScheduler.start();
       console.log('Reset Scheduler started');
     } else {
       console.log('Reset Scheduler already running');
-    }
-
-    // Start broadcast WebSocket server for clients
-    if (!broadcastServer) {
-      broadcastServer = new BroadcastServer(server);
-      console.log('Broadcast WebSocket server started');
     }
 
     // Start WebSocket client to Polygon (singleton)

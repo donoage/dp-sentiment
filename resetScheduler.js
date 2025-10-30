@@ -1,9 +1,10 @@
 const { resetSentiments } = require('./database');
 
 class ResetScheduler {
-  constructor() {
+  constructor(broadcastServer = null) {
     this.schedulerInterval = null;
     this.lastRunDate = null;
+    this.broadcastServer = broadcastServer;
   }
 
   // Check if it's time to reset sentiments (6:45 AM ET on weekdays)
@@ -62,6 +63,12 @@ class ResetScheduler {
       this.lastRunDate = etTime.toISOString().split('T')[0];
       
       console.log('✅ Daily sentiment reset completed - starting fresh for today');
+      
+      // Broadcast reset to all connected clients (force them to refresh with zeros)
+      if (this.broadcastServer) {
+        console.log('📡 Broadcasting reset to all connected clients...');
+        await this.broadcastServer.broadcastFullUpdate();
+      }
     } catch (error) {
       console.error('❌ Error running daily sentiment reset:', error);
     }
