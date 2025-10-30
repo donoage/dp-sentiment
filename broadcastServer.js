@@ -8,7 +8,9 @@ class BroadcastServer {
       path: '/ws'
     });
     this.clients = new Set();
+    this.syncInterval = null;
     this.setupServer();
+    this.startPeriodicSync();
   }
 
   setupServer() {
@@ -153,6 +155,27 @@ class BroadcastServer {
 
   getClientCount() {
     return this.wss.clients.size;
+  }
+
+  // Periodically sync all clients with database (every 5 minutes)
+  startPeriodicSync() {
+    console.log('🔄 Starting periodic full sync (every 5 minutes)');
+    
+    // Sync every 5 minutes to keep all clients aligned
+    this.syncInterval = setInterval(async () => {
+      if (this.wss.clients.size > 0) {
+        console.log('🔄 Running periodic full sync for all clients...');
+        await this.broadcastFullUpdate();
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+  }
+
+  stopPeriodicSync() {
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval);
+      this.syncInterval = null;
+      console.log('🔄 Stopped periodic full sync');
+    }
   }
 }
 
