@@ -206,10 +206,10 @@ async function saveIntradaySnapshot() {
     const totalBearish = parseFloat(result.rows[0].total_bearish);
     const netSentiment = totalBullish - totalBearish;
     
-    // Get current time in UTC and round to nearest 5 minutes
+    // Get current time in UTC and round to nearest 2 minutes
     const now = new Date();
     const minutes = now.getUTCMinutes();
-    const roundedMinutes = Math.floor(minutes / 5) * 5;
+    const roundedMinutes = Math.floor(minutes / 2) * 2;
     now.setUTCMinutes(roundedMinutes, 0, 0); // Set seconds and ms to 0
     
     const snapshotTime = now.toISOString();
