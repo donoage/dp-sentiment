@@ -7,6 +7,7 @@ class IntradayChart {
     this.data = [];
     this.chartPadding = { top: 40, right: 60, bottom: 60, left: 100 };
     this.hoveredPoint = null;
+    this.mousePosition = null; // Store mouse position for crosshair
     this.isDarkMode = false;
   }
 
@@ -237,9 +238,13 @@ class IntradayChart {
     // Draw legend
     this.drawLegend(width, colors);
     
-    // Draw crosshair and tooltip if hovering
+    // Draw crosshair if mouse is over chart
+    if (this.mousePosition) {
+      this.drawCrosshairAtMouse(this.mousePosition, chartX, chartY, chartWidth, chartHeight, yMin, yMax, colors);
+    }
+    
+    // Draw tooltip if hovering over a point
     if (this.hoveredPoint !== null) {
-      this.drawCrosshair(this.hoveredPoint, chartX, chartY, chartWidth, chartHeight, yMin, yMax, colors);
       this.drawTooltip(this.hoveredPoint, chartX, chartY, chartWidth, chartHeight, yMin, yMax, colors);
     }
   }
@@ -551,11 +556,9 @@ class IntradayChart {
     this.ctx.fillText('Bearish (Below $0)', legendX + lineLength + 8, legendY + spacing);
   }
 
-  // Draw crosshair
-  drawCrosshair(index, x, y, width, height, yMin, yMax, colors) {
-    const point = this.data[index];
-    const xPos = this.getXPosition(point.time, x, width);
-    const netY = y + height - ((point.net - yMin) / (yMax - yMin)) * height;
+  // Draw crosshair at mouse position
+  drawCrosshairAtMouse(mousePos, x, y, width, height, yMin, yMax, colors) {
+    const { x: mouseX, y: mouseY } = mousePos;
     
     // Set crosshair style
     this.ctx.strokeStyle = this.isDarkMode ? 'rgba(156, 163, 175, 0.5)' : 'rgba(107, 114, 128, 0.5)';
@@ -564,18 +567,64 @@ class IntradayChart {
     
     // Draw vertical line
     this.ctx.beginPath();
-    this.ctx.moveTo(xPos, y);
-    this.ctx.lineTo(xPos, y + height);
+    this.ctx.moveTo(mouseX, y);
+    this.ctx.lineTo(mouseX, y + height);
     this.ctx.stroke();
     
     // Draw horizontal line
     this.ctx.beginPath();
-    this.ctx.moveTo(x, netY);
-    this.ctx.lineTo(x + width, netY);
+    this.ctx.moveTo(x, mouseY);
+    this.ctx.lineTo(x + width, mouseY);
     this.ctx.stroke();
     
     // Reset line dash
     this.ctx.setLineDash([]);
+    
+    // Calculate and display time value (x-axis)
+    const dataStart = 7 * 60;         // 420 minutes (7 AM)
+    const dataDuration = 13 * 60;     // 780 minutes (13 hours)
+    const ratio = (mouseX - x) / width;
+    const timeInMinutes = dataStart + (ratio * dataDuration);
+    const hours = Math.floor(timeInMinutes / 60);
+    const minutes = Math.floor(timeInMinutes % 60);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+    const timeStr = `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+    
+    // Calculate and display value (y-axis)
+    const valueRatio = 1 - ((mouseY - y) / height);
+    const value = yMin + (valueRatio * (yMax - yMin));
+    const valueStr = this.formatValue(value);
+    
+    // Draw time label at bottom
+    this.ctx.fillStyle = this.isDarkMode ? '#e5e7eb' : '#1f2937';
+    this.ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
+    this.ctx.textAlign = 'center';
+    this.ctx.textBaseline = 'top';
+    
+    // Background for time label
+    const timeTextWidth = this.ctx.measureText(timeStr).width;
+    this.ctx.fillStyle = this.isDarkMode ? '#2d2d2d' : '#ffffff';
+    this.ctx.fillRect(mouseX - timeTextWidth / 2 - 4, y + height + 2, timeTextWidth + 8, 16);
+    this.ctx.strokeStyle = this.isDarkMode ? '#4b5563' : '#d1d5db';
+    this.ctx.strokeRect(mouseX - timeTextWidth / 2 - 4, y + height + 2, timeTextWidth + 8, 16);
+    
+    this.ctx.fillStyle = this.isDarkMode ? '#e5e7eb' : '#1f2937';
+    this.ctx.fillText(timeStr, mouseX, y + height + 5);
+    
+    // Draw value label on left
+    this.ctx.textAlign = 'right';
+    this.ctx.textBaseline = 'middle';
+    
+    // Background for value label
+    const valueTextWidth = this.ctx.measureText(valueStr).width;
+    this.ctx.fillStyle = this.isDarkMode ? '#2d2d2d' : '#ffffff';
+    this.ctx.fillRect(x - valueTextWidth - 12, mouseY - 8, valueTextWidth + 8, 16);
+    this.ctx.strokeStyle = this.isDarkMode ? '#4b5563' : '#d1d5db';
+    this.ctx.strokeRect(x - valueTextWidth - 12, mouseY - 8, valueTextWidth + 8, 16);
+    
+    this.ctx.fillStyle = this.isDarkMode ? '#e5e7eb' : '#1f2937';
+    this.ctx.fillText(valueStr, x - 8, mouseY);
   }
 
   // Draw tooltip
@@ -652,14 +701,20 @@ class IntradayChart {
     const width = rect.width;
     const height = rect.height;
     const chartWidth = width - this.chartPadding.left - this.chartPadding.right;
+    const chartHeight = height - this.chartPadding.top - this.chartPadding.bottom;
     const chartX = this.chartPadding.left;
+    const chartY = this.chartPadding.top;
     
     // Check if mouse is in chart area
-    if (x < chartX || x > chartX + chartWidth) {
+    if (x < chartX || x > chartX + chartWidth || y < chartY || y > chartY + chartHeight) {
       this.hoveredPoint = null;
+      this.mousePosition = null;
       this.draw();
       return;
     }
+    
+    // Store mouse position for crosshair
+    this.mousePosition = { x, y };
     
     // Find nearest point based on x position
     let nearestIndex = 0;
@@ -687,8 +742,9 @@ class IntradayChart {
 
   // Handle mouse leave
   handleMouseLeave() {
-    if (this.hoveredPoint !== null) {
+    if (this.hoveredPoint !== null || this.mousePosition !== null) {
       this.hoveredPoint = null;
+      this.mousePosition = null;
       this.draw();
     }
   }
