@@ -89,8 +89,15 @@ class IntradayChart {
       // If no date specified, filter to today's data (in ET timezone)
       if (!date) {
         const now = new Date();
-        const etTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-        const today = etTime.toISOString().split('T')[0];
+        // Get today's date in ET timezone properly
+        const todayET = now.toLocaleDateString('en-US', { 
+          timeZone: 'America/New_York',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+        const [month, day, year] = todayET.split('/');
+        const today = `${year}-${month}-${day}`;
         
         console.log(`Filtering for today: ${today}`);
         
