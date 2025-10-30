@@ -93,15 +93,28 @@ class IntradayChart {
         this.data = snapshots
           .filter(s => {
             const snapshotDate = new Date(s.snapshot_time);
-            const snapshotET = new Date(snapshotDate.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-            const snapshotDateStr = snapshotET.toISOString().split('T')[0];
+            
+            // Get ET date string for date comparison
+            const etDateStr = snapshotDate.toLocaleDateString('en-US', { 
+              timeZone: 'America/New_York',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            });
+            const [month, day, year] = etDateStr.split('/');
+            const snapshotDateStr = `${year}-${month}-${day}`;
             
             // Check if it's today
             if (snapshotDateStr !== today) return false;
             
-            // Filter out times before 9:30 AM ET and after 4:00 PM ET
-            const hours = snapshotET.getHours();
-            const minutes = snapshotET.getMinutes();
+            // Get ET time for market hours check
+            const etTimeStr = snapshotDate.toLocaleString('en-US', { 
+              timeZone: 'America/New_York',
+              hour12: false,
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            const [hours, minutes] = etTimeStr.split(':').map(Number);
             const timeInMinutes = hours * 60 + minutes;
             const marketOpen = 9 * 60 + 30; // 9:30 AM
             const marketClose = 16 * 60;     // 4:00 PM
@@ -124,11 +137,15 @@ class IntradayChart {
         this.data = snapshots
           .filter(s => {
             const snapshotDate = new Date(s.snapshot_time);
-            const snapshotET = new Date(snapshotDate.toLocaleString('en-US', { timeZone: 'America/New_York' }));
             
-            // Filter out times before 9:30 AM ET and after 4:00 PM ET
-            const hours = snapshotET.getHours();
-            const minutes = snapshotET.getMinutes();
+            // Get ET time for market hours check
+            const etTimeStr = snapshotDate.toLocaleString('en-US', { 
+              timeZone: 'America/New_York',
+              hour12: false,
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            const [hours, minutes] = etTimeStr.split(':').map(Number);
             const timeInMinutes = hours * 60 + minutes;
             const marketOpen = 9 * 60 + 30; // 9:30 AM
             const marketClose = 16 * 60;     // 4:00 PM
