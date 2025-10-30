@@ -298,7 +298,7 @@ function updateTable(tableId, holdings, sentimentMap, etfType) {
     const totalVolume = bullishAmount + bearishAmount;
     const bullishPercent = totalVolume > 0 ? (bullishAmount / totalVolume) * 100 : 0;
     const bearishPercent = totalVolume > 0 ? (bearishAmount / totalVolume) * 100 : 0;
-    const minThreshold = 250000; // $250K minimum for extreme detection
+    const minThreshold = 10000000; // $10M minimum for extreme detection
 
     let sentimentBadge = '';
     let sentimentText = 'Waiting...';

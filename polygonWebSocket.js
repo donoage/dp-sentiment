@@ -242,6 +242,12 @@ class PolygonWebSocketClient {
     // Calculate trade value
     const tradeValue = price * size;
 
+    // Filter out small trades - only consider orders >= $100K
+    const minOrderAmount = 100000;
+    if (tradeValue < minOrderAmount) {
+      return false;
+    }
+
     // Determine sentiment based on darkpool trade price vs current market price
     // Trade below current price = bullish (buyers willing to pay market price)
     // Trade above current price = bearish (sellers getting premium)
