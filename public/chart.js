@@ -237,8 +237,9 @@ class IntradayChart {
     // Draw legend
     this.drawLegend(width, colors);
     
-    // Draw tooltip if hovering
+    // Draw crosshair and tooltip if hovering
     if (this.hoveredPoint !== null) {
+      this.drawCrosshair(this.hoveredPoint, chartX, chartY, chartWidth, chartHeight, yMin, yMax, colors);
       this.drawTooltip(this.hoveredPoint, chartX, chartY, chartWidth, chartHeight, yMin, yMax, colors);
     }
   }
@@ -548,6 +549,33 @@ class IntradayChart {
     
     this.ctx.fillStyle = colors.text;
     this.ctx.fillText('Bearish (Below $0)', legendX + lineLength + 8, legendY + spacing);
+  }
+
+  // Draw crosshair
+  drawCrosshair(index, x, y, width, height, yMin, yMax, colors) {
+    const point = this.data[index];
+    const xPos = this.getXPosition(point.time, x, width);
+    const netY = y + height - ((point.net - yMin) / (yMax - yMin)) * height;
+    
+    // Set crosshair style
+    this.ctx.strokeStyle = this.isDarkMode ? 'rgba(156, 163, 175, 0.5)' : 'rgba(107, 114, 128, 0.5)';
+    this.ctx.lineWidth = 1;
+    this.ctx.setLineDash([5, 5]);
+    
+    // Draw vertical line
+    this.ctx.beginPath();
+    this.ctx.moveTo(xPos, y);
+    this.ctx.lineTo(xPos, y + height);
+    this.ctx.stroke();
+    
+    // Draw horizontal line
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, netY);
+    this.ctx.lineTo(x + width, netY);
+    this.ctx.stroke();
+    
+    // Reset line dash
+    this.ctx.setLineDash([]);
   }
 
   // Draw tooltip
