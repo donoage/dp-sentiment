@@ -103,16 +103,15 @@ class IntradayChart {
             // Check if it's today
             if (snapshotDateStr !== today) return false;
             
-            // Get UTC hours - market hours in UTC are 13:30-20:00 (EDT) or 14:30-21:00 (EST)
-            const utcDT = DateTime.fromISO(s.snapshot_time, { zone: 'utc' });
-            const utcTimeInMinutes = utcDT.hour * 60 + utcDT.minute;
+            // Get ET hours - data collection hours are 7:00 AM - 8:00 PM ET
+            const etDT = DateTime.fromISO(s.snapshot_time, { zone: 'utc' }).setZone('America/New_York');
+            const etTimeInMinutes = etDT.hour * 60 + etDT.minute;
             
-            // Market hours in UTC (EDT: UTC-4)
-            // 9:30 AM ET = 13:30 UTC, 4:00 PM ET = 20:00 UTC
-            const marketOpenUTC = 13 * 60 + 30; // 13:30 UTC
-            const marketCloseUTC = 20 * 60;      // 20:00 UTC
+            // Data collection hours: 7:00 AM - 8:00 PM ET
+            const dataStartET = 7 * 60;      // 7:00 AM
+            const dataEndET = 20 * 60;       // 8:00 PM
             
-            return utcTimeInMinutes >= marketOpenUTC && utcTimeInMinutes <= marketCloseUTC;
+            return etTimeInMinutes >= dataStartET && etTimeInMinutes < dataEndET;
           })
           .map(s => {
             // Parse the UTC time directly - the Date object will handle display correctly
@@ -131,16 +130,15 @@ class IntradayChart {
           .filter(s => {
             const { DateTime } = luxon;
             
-            // Get UTC hours - market hours in UTC are 13:30-20:00 (EDT) or 14:30-21:00 (EST)
-            const utcDT = DateTime.fromISO(s.snapshot_time, { zone: 'utc' });
-            const utcTimeInMinutes = utcDT.hour * 60 + utcDT.minute;
+            // Get ET hours - data collection hours are 7:00 AM - 8:00 PM ET
+            const etDT = DateTime.fromISO(s.snapshot_time, { zone: 'utc' }).setZone('America/New_York');
+            const etTimeInMinutes = etDT.hour * 60 + etDT.minute;
             
-            // Market hours in UTC (EDT: UTC-4)
-            // 9:30 AM ET = 13:30 UTC, 4:00 PM ET = 20:00 UTC
-            const marketOpenUTC = 13 * 60 + 30; // 13:30 UTC
-            const marketCloseUTC = 20 * 60;      // 20:00 UTC
+            // Data collection hours: 7:00 AM - 8:00 PM ET
+            const dataStartET = 7 * 60;      // 7:00 AM
+            const dataEndET = 20 * 60;       // 8:00 PM
             
-            return utcTimeInMinutes >= marketOpenUTC && utcTimeInMinutes <= marketCloseUTC;
+            return etTimeInMinutes >= dataStartET && etTimeInMinutes < dataEndET;
           })
           .map(s => {
             // Parse the UTC time directly - the Date object will handle display correctly
@@ -317,16 +315,16 @@ class IntradayChart {
       this.ctx.fillText(this.formatValue(value), x - 10, yPos);
     }
     
-    // X-axis labels - Fixed market hours (9:30 AM to 4:00 PM ET)
+    // X-axis labels - Data collection hours (7:00 AM to 8:00 PM ET)
     const marketHours = [
-      { label: '9:30 AM', value: 0 },
-      { label: '10:00 AM', value: 0.5 / 6.5 },
-      { label: '11:00 AM', value: 1.5 / 6.5 },
-      { label: '12:00 PM', value: 2.5 / 6.5 },
-      { label: '1:00 PM', value: 3.5 / 6.5 },
-      { label: '2:00 PM', value: 4.5 / 6.5 },
-      { label: '3:00 PM', value: 5.5 / 6.5 },
-      { label: '4:00 PM', value: 1 }
+      { label: '7:00 AM', value: 0 },
+      { label: '9:00 AM', value: 2 / 13 },
+      { label: '11:00 AM', value: 4 / 13 },
+      { label: '1:00 PM', value: 6 / 13 },
+      { label: '3:00 PM', value: 8 / 13 },
+      { label: '5:00 PM', value: 10 / 13 },
+      { label: '7:00 PM', value: 12 / 13 },
+      { label: '8:00 PM', value: 1 }
     ];
     
     marketHours.forEach(hour => {
@@ -362,7 +360,7 @@ class IntradayChart {
     this.ctx.restore();
   }
 
-  // Get x position based on time (9:30 AM to 4:00 PM ET)
+  // Get x position based on time (7:00 AM to 8:00 PM ET)
   getXPosition(time, x, width) {
     // Convert UTC time to ET for positioning
     const etTimeStr = time.toLocaleString('en-US', { 
@@ -374,14 +372,14 @@ class IntradayChart {
     const [hours, minutes] = etTimeStr.split(':').map(Number);
     const timeInMinutes = hours * 60 + minutes;
     
-    // Market hours: 9:30 AM (570 minutes) to 4:00 PM (960 minutes)
-    const marketOpen = 9 * 60 + 30;  // 570
-    const marketClose = 16 * 60;      // 960
-    const marketDuration = marketClose - marketOpen; // 390 minutes (6.5 hours)
+    // Data collection hours: 7:00 AM (420 minutes) to 8:00 PM (1200 minutes)
+    const dataStart = 7 * 60;         // 420
+    const dataEnd = 20 * 60;          // 1200
+    const dataDuration = dataEnd - dataStart; // 780 minutes (13 hours)
     
-    // Calculate position within market hours
-    const minutesFromOpen = timeInMinutes - marketOpen;
-    const ratio = minutesFromOpen / marketDuration;
+    // Calculate position within data collection hours
+    const minutesFromStart = timeInMinutes - dataStart;
+    const ratio = minutesFromStart / dataDuration;
     
     return x + ratio * width;
   }
