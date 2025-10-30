@@ -7,6 +7,8 @@ const { initDatabase, getAllSentiments, getEODSnapshots, getIntradaySnapshots } 
 const PolygonWebSocketClient = require('./polygonWebSocket');
 const EODScheduler = require('./eodScheduler');
 const IntradayScheduler = require('./intradayScheduler');
+const HoldingsScheduler = require('./holdingsScheduler');
+const ResetScheduler = require('./resetScheduler');
 const BroadcastServer = require('./broadcastServer');
 const config = require('./config');
 
@@ -25,6 +27,12 @@ let eodScheduler = null;
 
 // Intraday Scheduler instance
 let intradayScheduler = null;
+
+// Holdings Scheduler instance
+let holdingsScheduler = null;
+
+// Reset Scheduler instance
+let resetScheduler = null;
 
 // Middleware
 app.use(express.json());
@@ -95,10 +103,23 @@ async function startServer() {
     await config.initialize();
     console.log('ETF holdings initialized');
 
-    // Schedule daily holdings refresh (every 6 hours)
-    setInterval(async () => {
-      await config.refresh();
-    }, 6 * 60 * 60 * 1000); // 6 hours
+    // Start Holdings Scheduler (refreshes daily at 6:30 AM ET)
+    if (!holdingsScheduler) {
+      holdingsScheduler = new HoldingsScheduler();
+      holdingsScheduler.start();
+      console.log('Holdings Scheduler started');
+    } else {
+      console.log('Holdings Scheduler already running');
+    }
+
+    // Start Reset Scheduler (resets sentiments daily at 6:45 AM ET)
+    if (!resetScheduler) {
+      resetScheduler = new ResetScheduler();
+      resetScheduler.start();
+      console.log('Reset Scheduler started');
+    } else {
+      console.log('Reset Scheduler already running');
+    }
 
     // Start broadcast WebSocket server for clients
     if (!broadcastServer) {
