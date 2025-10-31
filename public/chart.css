@@ -15,13 +15,14 @@
 }
 
 .chart-title {
-  font-size: 20px;
+  font-size: 1.375rem;
   font-weight: 600;
   color: #1f2937;
   display: flex;
   align-items: center;
   gap: 10px;
   margin: 0;
+  letter-spacing: -0.3px;
 }
 
 .chart-icon {
@@ -40,7 +41,8 @@
   padding: 8px 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 0.875rem;
+  font-weight: 500;
   color: #1f2937;
   background: white;
   cursor: pointer;
@@ -78,8 +80,8 @@
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -88,6 +90,7 @@
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   min-height: 44px; /* Better touch target */
+  letter-spacing: 0.3px;
 }
 
 .chart-refresh-btn:hover {
@@ -108,9 +111,11 @@
 }
 
 .chart-info {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: #6b7280;
   margin-bottom: 16px;
+  font-weight: 400;
+  line-height: 1.5;
 }
 
 .chart-container {
@@ -129,7 +134,8 @@
   justify-content: center;
   height: 100%;
   color: #6b7280;
-  font-size: 14px;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .chart-loading-spinner {

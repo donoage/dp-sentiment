@@ -428,15 +428,6 @@ function initIntradayChart() {
     }
   });
 
-  // Set up refresh button
-  const refreshBtn = document.getElementById('chartRefreshBtn');
-  refreshBtn.addEventListener('click', async () => {
-    refreshBtn.disabled = true;
-    const selectedDate = datePicker.value;
-    await intradayChart.fetchData(selectedDate || null);
-    refreshBtn.disabled = false;
-  });
-
   // Load initial data (today)
   intradayChart.fetchData();
 }
