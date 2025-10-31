@@ -4,6 +4,18 @@
   box-sizing: border-box;
 }
 
+/* Better touch interactions for mobile */
+html {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   --bg-gradient-start: #667eea;
   --bg-gradient-end: #764ba2;
@@ -49,6 +61,7 @@ header {
   text-align: center;
   color: white;
   margin-bottom: 40px;
+  padding: 30px 0;
 }
 
 .header-top {
@@ -102,11 +115,18 @@ h1 {
   justify-content: center;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
+  /* Better touch target */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .dark-mode-toggle:hover {
   background: rgba(255, 255, 255, 0.3);
   transform: scale(1.1);
+}
+
+.dark-mode-toggle:active {
+  transform: scale(0.95);
 }
 
 .toggle-icon {
@@ -213,7 +233,7 @@ body.dark-mode .toggle-icon {
 .table-section {
   background: var(--card-bg);
   border-radius: 16px;
-  padding: 24px;
+  padding: 18px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: background 0.3s ease;
 }
@@ -221,7 +241,7 @@ body.dark-mode .toggle-icon {
 .table-title {
   font-size: 1.5rem;
   color: var(--text-primary);
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -242,6 +262,26 @@ body.dark-mode .table-icon {
 
 .table-wrapper {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(155, 155, 155, 0.5) transparent;
+}
+
+.table-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background-color: rgba(155, 155, 155, 0.5);
+  border-radius: 3px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(155, 155, 155, 0.7);
 }
 
 .sentiment-table {
@@ -257,7 +297,7 @@ body.dark-mode .table-icon {
 }
 
 .sentiment-table th {
-  padding: 12px 16px;
+  padding: 8px 12px;
   text-align: left;
   font-weight: 600;
   text-transform: none;
@@ -280,7 +320,7 @@ body.dark-mode .table-icon {
 }
 
 .sentiment-table td {
-  padding: 14px 16px;
+  padding: 8px 12px;
   text-align: left;
 }
 
@@ -600,17 +640,105 @@ body.dark-mode .extreme-bearish-row {
   border-top: 1px solid #f3f4f6;
 }
 
-@media (max-width: 768px) {
-  h1 {
-    font-size: 2rem;
-  }
-
+/* Tablet and below */
+@media (max-width: 1024px) {
   .top-section {
     grid-template-columns: 1fr;
   }
 
   .tables-container {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile devices */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
+  .container {
+    padding: 0 10px;
+  }
+
+  header {
+    padding: 20px 0;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  .logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+  }
+
+  .last-updated {
+    font-size: 0.85rem;
+  }
+
+  .header-top {
+    gap: 12px;
+  }
+
+  .title-with-logo {
+    gap: 12px;
+  }
+
+  .dark-mode-toggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  .toggle-icon {
+    font-size: 1.3rem;
+  }
+
+  .top-section {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .summary-cards {
+    gap: 15px;
+  }
+
+  .summary-card {
+    padding: 18px;
+  }
+
+  .summary-card h3 {
+    font-size: 0.9rem;
+  }
+
+  .summary-card .amount {
+    font-size: 1.6rem;
+  }
+
+  .tables-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .table-section {
+    padding: 16px;
+  }
+
+  .table-title {
+    font-size: 1.25rem;
+    margin-bottom: 16px;
+  }
+
+  .table-icon {
+    width: 24px;
+    height: 24px;
   }
 
   .sentiment-table {
@@ -622,16 +750,161 @@ body.dark-mode .extreme-bearish-row {
     padding: 10px 8px;
   }
 
+  /* Hide weight column on mobile */
+  .sentiment-table th:nth-child(2),
+  .sentiment-table td:nth-child(2) {
+    display: none;
+  }
+
   .ticker-cell {
     font-size: 1rem;
+    width: 60px;
+    min-width: 50px;
   }
 
   .amount-cell {
     font-size: 0.8rem;
+    white-space: nowrap;
   }
 
   .badge {
+    font-size: 0.65rem;
+    padding: 3px 6px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  body {
+    padding: 8px;
+  }
+
+  header {
+    padding: 15px 0;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+  }
+
+  .logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+  }
+
+  .last-updated {
+    font-size: 0.8rem;
+  }
+
+  .dark-mode-toggle {
+    width: 40px;
+    height: 40px;
+  }
+
+  .toggle-icon {
+    font-size: 1.2rem;
+  }
+
+  .summary-card {
+    padding: 16px;
+  }
+
+  .summary-card h3 {
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+  }
+
+  .summary-card .amount {
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+  }
+
+  .table-section {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .table-title {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+
+  .table-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .sentiment-table {
+    font-size: 0.75rem;
+  }
+
+  .sentiment-table th {
+    padding: 8px 6px;
+    font-size: 0.75rem;
+  }
+
+  .sentiment-table td {
+    padding: 10px 6px;
+  }
+
+  /* Hide weight column on mobile */
+  .sentiment-table th:nth-child(2),
+  .sentiment-table td:nth-child(2) {
+    display: none;
+  }
+
+  .ticker-cell {
+    font-size: 0.9rem;
+    width: 50px;
+    min-width: 45px;
+  }
+
+  .weight-cell {
+    font-size: 0.8rem;
+  }
+
+  .amount-cell {
     font-size: 0.7rem;
+    white-space: nowrap;
+  }
+
+  .badge {
+    font-size: 0.6rem;
+    padding: 2px 5px;
+  }
+
+  .sentiment-badge-container .badge {
+    font-size: 0.65rem;
     padding: 3px 8px;
+  }
+}
+
+/* Extra small phones - horizontal scroll for tables */
+@media (max-width: 360px) {
+  h1 {
+    font-size: 1.2rem;
+  }
+
+  .header-top {
+    flex-wrap: wrap;
+  }
+
+  .dark-mode-toggle {
+    position: relative;
+    margin-top: 8px;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sentiment-table {
+    min-width: 500px;
   }
 }

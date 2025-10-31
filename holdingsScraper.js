@@ -74,7 +74,7 @@ class HoldingsScraper {
 
       // StockAnalysis uses a clean table structure
       $('table tbody tr').each((i, row) => {
-        if (i >= 20) return false; // Stop after 20
+        if (i >= 25) return false; // Stop after 25
 
         const cells = $(row).find('td');
         if (cells.length < 3) return;
@@ -143,7 +143,7 @@ class HoldingsScraper {
 
       if (holdings.length >= 15) {
         this.cache.spy = {
-          data: holdings.slice(0, 20),
+          data: holdings.slice(0, 25),
           lastUpdated: Date.now(),
         };
         // Save to database after successful fetch
@@ -183,7 +183,7 @@ class HoldingsScraper {
 
       if (holdings.length >= 15) {
         this.cache.qqq = {
-          data: holdings.slice(0, 20),
+          data: holdings.slice(0, 25),
           lastUpdated: Date.now(),
         };
         // Save to database after successful fetch

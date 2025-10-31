@@ -161,7 +161,24 @@ function connectWebSocket() {
 
 // No longer needed - handled in ws.onmessage with batch updates
 
-function formatCurrency(amount) {
+function formatCurrency(amount, forceShort = false) {
+  const absAmount = Math.abs(amount);
+  const isMobile = window.innerWidth <= 768;
+
+  // For mobile or when forced, show only abbreviated format
+  if (isMobile || forceShort) {
+    if (absAmount >= 1000000000) {
+      return `$${(amount / 1000000000).toFixed(2)}B`;
+    } else if (absAmount >= 1000000) {
+      return `$${(amount / 1000000).toFixed(2)}M`;
+    } else if (absAmount >= 1000) {
+      return `$${(amount / 1000).toFixed(1)}K`;
+    } else {
+      return `$${amount.toFixed(0)}`;
+    }
+  }
+
+  // For desktop, show full format with abbreviated in parentheses
   const formatted = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -169,10 +186,7 @@ function formatCurrency(amount) {
     maximumFractionDigits: 0,
   }).format(amount);
 
-  // Add abbreviated format in parentheses
   let abbreviated = '';
-  const absAmount = Math.abs(amount);
-
   if (absAmount >= 1000000000) {
     abbreviated = `(${(amount / 1000000000).toFixed(2)}B)`;
   } else if (absAmount >= 1000000) {
@@ -456,6 +470,24 @@ function startChartAutoRefresh() {
     5 * 60 * 1000
   ); // 5 minutes
 }
+
+// Handle window resize to update number formatting
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    // Re-render dashboard with current data when screen size changes
+    if (Object.keys(sentimentCache).length > 0) {
+      const sentiments = Object.keys(sentimentCache).map(ticker => ({
+        ticker: ticker,
+        bullish_amount: sentimentCache[ticker].bullish_amount,
+        bearish_amount: sentimentCache[ticker].bearish_amount,
+        last_updated: sentimentCache[ticker].last_updated,
+      }));
+      updateDashboard(sentiments);
+    }
+  }, 250); // Debounce resize events
+});
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
