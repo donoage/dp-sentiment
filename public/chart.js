@@ -298,29 +298,29 @@ class IntradayChart {
   getColors() {
     if (this.isDarkMode) {
       return {
-        background: '#1a1a1a',
-        text: '#e5e7eb',
-        textSecondary: '#9ca3af',
-        grid: '#374151',
-        zeroLine: '#6b7280',
-        marketHours: '#f59e0b',
-        bullish: '#10b981',
-        bearish: '#ef4444',
-        net: '#3b82f6',
-        tooltip: '#2d2d2d',
-        tooltipBorder: '#4b5563',
+        background: '#111827',
+        text: '#f1f5f9',
+        textSecondary: '#cbd5e1',
+        grid: '#334155',
+        zeroLine: '#64748b',
+        marketHours: '#a78bfa',
+        bullish: '#34d399',
+        bearish: '#f87171',
+        net: '#60a5fa',
+        tooltip: '#1e293b',
+        tooltipBorder: '#475569',
       };
     } else {
       return {
-        background: '#ffffff',
+        background: '#fafafa',
         text: '#1f2937',
         textSecondary: '#6b7280',
         grid: '#e5e7eb',
         zeroLine: '#9ca3af',
-        marketHours: '#f59e0b',
+        marketHours: '#8b5cf6',
         bullish: '#10b981',
         bearish: '#ef4444',
-        net: '#3b82f6',
+        net: '#667eea',
         tooltip: '#ffffff',
         tooltipBorder: '#d1d5db',
       };
